@@ -64,6 +64,7 @@ function appendBlockConditional(view, inverted, helperName, params, hash, option
     view.appendChild(BoundIfView, {
       _morph: options.morph,
       _context: get(view, 'context'),
+      renderer: get(view, 'renderer'),
       conditionStream: condition,
       truthyTemplate: truthyTemplate,
       falsyTemplate: falsyTemplate,

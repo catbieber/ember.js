@@ -1881,6 +1881,8 @@ var View = CoreView.extend({
 
     if (CoreView.detect(maybeViewClass)) {
       attrs.container = this.container;
+      attrs.renderer = this.renderer;
+
       view = maybeViewClass.create(attrs);
 
       // don't set the property on a virtual view, as they are invisible to
