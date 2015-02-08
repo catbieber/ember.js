@@ -275,7 +275,7 @@ test("AutoLocation._getFullPath() should return full pathname including query an
 });
 
 test("AutoLocation._getHistoryPath() should return a normalized, HistoryLocation-supported path", function() {
-  expect(3);
+  expect(5);
 
   AutoTestLocation.rootURL = '/app/';
 
@@ -302,10 +302,29 @@ test("AutoLocation._getHistoryPath() should return a normalized, HistoryLocation
     hash: '#about?foo=bar#foo'
   });
   equal(AutoTestLocation._getHistoryPath(), '/app/#about?foo=bar#foo', 'URLs with a hash not following #/ convention shouldn\'t be normalized as a route');
+
+  AutoTestLocation.baseURL = '/base/';
+
+  mockBrowserLocation({
+    href: 'http://test.com/app/base/about?foo=bar#foo',
+    pathname: '/app/base/about',
+    search: '?foo=bar',
+    hash: '#foo'
+  });
+  equal(AutoTestLocation._getHistoryPath(), '/app/base/about?foo=bar#foo', 'URLs already in HistoryLocation form should come out the same with baseURL');
+
+  mockBrowserLocation({
+    href: 'http://test.com/app/base/#/about?foo=bar#foo',
+    pathname: '/app/base/',
+    search: '',
+    hash: '#/about?foo=bar#foo'
+  });
+  equal(AutoTestLocation._getHistoryPath(), '/app/base/about?foo=bar#foo', 'HashLocation formed URLs should be normalized with baseURL');
+
 });
 
 test("AutoLocation._getHashPath() should return a normalized, HashLocation-supported path", function() {
-  expect(3);
+  expect(5);
 
   AutoTestLocation.rootURL = '/app/';
 
@@ -315,7 +334,7 @@ test("AutoLocation._getHashPath() should return a normalized, HashLocation-suppo
     search: '',
     hash: '#/about?foo=bar#foo'
   });
-  equal(AutoTestLocation._getHashPath(), '/app/#/about?foo=bar#foo', 'URLs already in HistoryLocation form should come out the same');
+  equal(AutoTestLocation._getHashPath(), '/app/#/about?foo=bar#foo', 'URLs already in HashLocation form should come out the same');
 
   mockBrowserLocation({
     href: 'http://test.com/app/about?foo=bar#foo',
@@ -333,6 +352,25 @@ test("AutoLocation._getHashPath() should return a normalized, HashLocation-suppo
   });
 
   equal(AutoTestLocation._getHashPath(), '/app/#/#about?foo=bar#foo', 'URLs with a hash not following #/ convention shouldn\'t be normalized as a route');
+
+  AutoTestLocation.baseURL = '/base/';
+
+  mockBrowserLocation({
+    href: 'http://test.com/app/base/#/about?foo=bar#foo',
+    pathname: '/app/base/',
+    search: '',
+    hash: '#/about?foo=bar#foo'
+  });
+  equal(AutoTestLocation._getHashPath(), '/app/base/#/about?foo=bar#foo', 'URLs already in HashLocation form should come out the same with baseURL');
+
+  mockBrowserLocation({
+    href: 'http://test.com/app/base/about?foo=bar#foo',
+    pathname: '/app/base/about',
+    search: '?foo=bar',
+    hash: '#foo'
+  });
+  equal(AutoTestLocation._getHashPath(), '/app/base/#/about?foo=bar#foo', 'HistoryLocation formed URLs should be normalized with baseURL');
+
 });
 
 test("AutoLocation.create requires any rootURL given to end in a trailing forward slash", function() {

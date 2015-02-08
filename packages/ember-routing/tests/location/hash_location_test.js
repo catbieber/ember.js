@@ -1,5 +1,6 @@
 import Ember from "ember-metal/core";
 import { get } from "ember-metal/property_get";
+import { set } from "ember-metal/property_set";
 import { guidFor } from "ember-metal/utils";
 import run from "ember-metal/run_loop";
 import HashLocation from "ember-routing/location/hash_location";
@@ -54,11 +55,65 @@ QUnit.module("Ember.HashLocation", {
   }
 });
 
+test("base URL is removed when retrieving the current pathname", function() {
+  expect(1);
+
+  HashTestLocation.reopen({
+    init: function() {
+      this._super();
+      set(this, 'baseURL', '/base/');
+    }
+  });
+
+  createLocation({
+    _location: mockBrowserLocation('/base/#/foo/bar')
+  });
+  equal(location.getURL(), '/foo/bar');
+});
+
+test("base URL is preserved when moving around", function() {
+  expect(1);
+
+  HashTestLocation.reopen({
+    init: function() {
+      this._super();
+
+      set(this, 'baseURL', '/base/');
+    }
+  });
+
+  createLocation({
+    _location: mockBrowserLocation('/base/#/foo/bar')
+  });
+  location.setURL('/one/two');
+
+  equal(location.formatURL('/one/two'), '/base/#/one/two');
+});
+
 test("HashLocation.getURL() returns the current url", function() {
   expect(1);
 
   createLocation({
     _location: mockBrowserLocation('/#/foo/bar')
+  });
+
+  equal(location.getURL(), '/foo/bar');
+});
+
+test("HashLocation.getURL() returns the current url excluding both baseURL and rootURL", function() {
+  expect(1);
+
+  HashTestLocation.reopen({
+    init: function() {
+      this._super();
+
+      set(this, 'rootURL', '/app/');
+      set(this, 'baseURL', '/base/');
+    }
+  });
+
+  createLocation({
+    _location: mockBrowserLocation('/base/#/foo/bar')
   });
 
   equal(location.getURL(), '/foo/bar');
