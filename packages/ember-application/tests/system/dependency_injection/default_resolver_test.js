@@ -11,12 +11,12 @@ import {
 
 var registry, locator, application, originalLookup, originalLoggerInfo;
 
-QUnit.module("Ember.Application Depedency Injection", {
+QUnit.module("Ember.Application Dependency Injection - default resolver", {
   setup: function() {
     originalLookup = Ember.lookup;
     application = run(Application, 'create');
 
-    registry = application.__registry__;
+    registry = application.registry;
     locator = application.__container__;
     originalLoggerInfo = Logger.info;
   },
@@ -32,7 +32,7 @@ QUnit.module("Ember.Application Depedency Injection", {
   }
 });
 
-test('the default resolver can look things up in other namespaces', function() {
+QUnit.test('the default resolver can look things up in other namespaces', function() {
   var UserInterface = Ember.lookup.UserInterface = Namespace.create();
   UserInterface.NavigationController = Controller.extend();
 
@@ -41,7 +41,7 @@ test('the default resolver can look things up in other namespaces', function() {
   ok(nav instanceof UserInterface.NavigationController, "the result should be an instance of the specified class");
 });
 
-test('the default resolver looks up templates in Ember.TEMPLATES', function() {
+QUnit.test('the default resolver looks up templates in Ember.TEMPLATES', function() {
   function fooTemplate() {}
   function fooBarTemplate() {}
   function fooBarBazTemplate() {}
@@ -55,7 +55,7 @@ test('the default resolver looks up templates in Ember.TEMPLATES', function() {
   equal(locator.lookup('template:fooBar.baz'), fooBarBazTemplate, "resolves template:foo_bar.baz");
 });
 
-test('the default resolver looks up basic name as no prefix', function() {
+QUnit.test('the default resolver looks up basic name as no prefix', function() {
   ok(Controller.detect(locator.lookup('controller:basic')), 'locator looksup correct controller');
 });
 
@@ -63,19 +63,25 @@ function detectEqual(first, second, message) {
   ok(first.detect(second), message);
 }
 
-test('the default resolver looks up arbitrary types on the namespace', function() {
+QUnit.test('the default resolver looks up arbitrary types on the namespace', function() {
   application.FooManager = EmberObject.extend({});
 
   detectEqual(application.FooManager, registry.resolver('manager:foo'), "looks up FooManager on application");
 });
 
-test("the default resolver resolves models on the namespace", function() {
+QUnit.test("the default resolver resolves models on the namespace", function() {
   application.Post = EmberObject.extend({});
 
   detectEqual(application.Post, locator.lookupFactory('model:post'), "looks up Post model on application");
 });
 
-test("the default resolver resolves helpers", function() {
+QUnit.test("the default resolver resolves *:main on the namespace", function() {
+  application.FooBar = EmberObject.extend({});
+
+  detectEqual(application.FooBar, locator.lookupFactory('foo-bar:main'), "looks up FooBar type without name on application");
+});
+
+QUnit.test("the default resolver resolves helpers", function() {
   expect(2);
 
   function fooresolvertestHelper() {
@@ -101,7 +107,7 @@ test("the default resolver resolves helpers", function() {
   barBazResolverTestHelper();
 });
 
-test("the default resolver resolves container-registered helpers", function() {
+QUnit.test("the default resolver resolves container-registered helpers", function() {
   function gooresolvertestHelper() { return 'GOO'; }
   function gooGazResolverTestHelper() { return 'GAZ'; }
   application.register('helper:gooresolvertest', gooresolvertestHelper);
@@ -110,18 +116,18 @@ test("the default resolver resolves container-registered helpers", function() {
   equal(gooGazResolverTestHelper, locator.lookup('helper:goo-baz-resolver-test'), "looks up gooGazResolverTestHelper helper");
 });
 
-test("the default resolver throws an error if the fullName to resolve is invalid", function() {
-  raises(function() { registry.resolve(undefined);}, TypeError, /Invalid fullName/ );
-  raises(function() { registry.resolve(null);     }, TypeError, /Invalid fullName/ );
-  raises(function() { registry.resolve('');       }, TypeError, /Invalid fullName/ );
-  raises(function() { registry.resolve('');       }, TypeError, /Invalid fullName/ );
-  raises(function() { registry.resolve(':');      }, TypeError, /Invalid fullName/ );
-  raises(function() { registry.resolve('model');  }, TypeError, /Invalid fullName/ );
-  raises(function() { registry.resolve('model:'); }, TypeError, /Invalid fullName/ );
-  raises(function() { registry.resolve(':type');  }, TypeError, /Invalid fullName/ );
+QUnit.test("the default resolver throws an error if the fullName to resolve is invalid", function() {
+  throws(function() { registry.resolve(undefined);}, TypeError, /Invalid fullName/ );
+  throws(function() { registry.resolve(null);     }, TypeError, /Invalid fullName/ );
+  throws(function() { registry.resolve('');       }, TypeError, /Invalid fullName/ );
+  throws(function() { registry.resolve('');       }, TypeError, /Invalid fullName/ );
+  throws(function() { registry.resolve(':');      }, TypeError, /Invalid fullName/ );
+  throws(function() { registry.resolve('model');  }, TypeError, /Invalid fullName/ );
+  throws(function() { registry.resolve('model:'); }, TypeError, /Invalid fullName/ );
+  throws(function() { registry.resolve(':type');  }, TypeError, /Invalid fullName/ );
 });
 
-test("the default resolver logs hits if `LOG_RESOLVER` is set", function() {
+QUnit.test("the default resolver logs hits if `LOG_RESOLVER` is set", function() {
   expect(3);
 
   application.LOG_RESOLVER = true;
@@ -137,7 +143,7 @@ test("the default resolver logs hits if `LOG_RESOLVER` is set", function() {
   registry.resolve('doo:scooby');
 });
 
-test("the default resolver logs misses if `LOG_RESOLVER` is set", function() {
+QUnit.test("the default resolver logs misses if `LOG_RESOLVER` is set", function() {
   expect(3);
 
   application.LOG_RESOLVER = true;
@@ -152,7 +158,7 @@ test("the default resolver logs misses if `LOG_RESOLVER` is set", function() {
   registry.resolve('doo:scooby');
 });
 
-test("doesn't log without LOG_RESOLVER", function() {
+QUnit.test("doesn't log without LOG_RESOLVER", function() {
   var infoCount = 0;
 
   application.ScoobyDoo = EmberObject.extend();
@@ -164,4 +170,13 @@ test("doesn't log without LOG_RESOLVER", function() {
   registry.resolve('doo:scooby');
   registry.resolve('doo:scrappy');
   equal(infoCount, 0, 'Logger.info should not be called if LOG_RESOLVER is not set');
+});
+
+QUnit.test("lookup description", function() {
+  application.toString = function() { return 'App'; };
+
+  equal(registry.describe('controller:foo'), 'App.FooController', 'Type gets appended at the end');
+  equal(registry.describe('controller:foo.bar'), 'App.FooBarController', 'dots are removed');
+  equal(registry.describe('model:foo'), 'App.Foo', "models don't get appended at the end");
+
 });

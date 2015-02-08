@@ -17,7 +17,7 @@ import {
 } from "ember-views/system/utils";
 import RenderBuffer from "ember-views/system/render_buffer";
 import Renderer from "ember-views/system/renderer";
-import { DOMHelper } from "morph";
+import DOMHelper from "dom-helper";
 import "ember-views/system/ext";  // for the side effect of extending Ember.run.queues
 import {
   cloneStates,
@@ -39,8 +39,10 @@ import TextField from "ember-views/views/text_field";
 import TextArea from "ember-views/views/text_area";
 
 import SimpleBoundView from "ember-views/views/simple_bound_view";
-import _MetamorphView from "ember-views/views/metamorph_view";
-import { _Metamorph } from "ember-views/views/metamorph_view";
+import {
+  default as _MetamorphView,
+  _Metamorph
+} from "ember-views/views/metamorph_view";
 import {
   Select,
   SelectOption,

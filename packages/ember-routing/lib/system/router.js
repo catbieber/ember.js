@@ -11,15 +11,13 @@ import { fmt } from "ember-runtime/system/string";
 import EmberObject from "ember-runtime/system/object";
 import Evented from "ember-runtime/mixins/evented";
 import EmberRouterDSL from "ember-routing/system/dsl";
-import EmberView from "ember-views/views/view";
 import EmberLocation from "ember-routing/location/api";
-import _MetamorphView from "ember-views/views/metamorph_view";
 import {
   routeArgs,
   getActiveTargetName,
   stashParamNames
 } from "ember-routing/utils";
-import { create } from "ember-metal/platform";
+import create from 'ember-metal/platform/create';
 
 import RouterState from "./router_state";
 
@@ -127,38 +125,40 @@ var EmberRouter = EmberObject.extend(Evented, {
     @private
   */
   startRouting: function(moduleBasedResolver) {
+    var initialURL = get(this, 'initialURL');
+    var location = get(this, 'location');
 
+    if (this.setupRouter(moduleBasedResolver, location)) {
+      if (typeof initialURL === "undefined") {
+        initialURL = get(this, 'location').getURL();
+      }
+      var initialTransition = this.handleURL(initialURL);
+      if (initialTransition && initialTransition.error) {
+        throw initialTransition.error;
+      }
+    }
+  },
+
+  setupRouter: function(moduleBasedResolver) {
     this._initRouterJs(moduleBasedResolver);
 
     var router = this.router;
     var location = get(this, 'location');
-    var container = this.container;
     var self = this;
-    var initialURL = get(this, 'initialURL');
-    var initialTransition;
 
     // Allow the Location class to cancel the router setup while it refreshes
     // the page
     if (get(location, 'cancelRouterSetup')) {
-      return;
+      return false;
     }
 
     this._setupRouter(router, location);
-
-    container._registry.register('view:default', _MetamorphView);
-    container._registry.register('view:toplevel', EmberView.extend());
 
     location.onUpdateURL(function(url) {
       self.handleURL(url);
     });
 
-    if (typeof initialURL === "undefined") {
-      initialURL = location.getURL();
-    }
-    initialTransition = this.handleURL(initialURL);
-    if (initialTransition && initialTransition.error) {
-      throw initialTransition.error;
-    }
+    return true;
   },
 
   /**
@@ -185,6 +185,24 @@ var EmberRouter = EmberObject.extend(Evented, {
 
     if (get(this, 'namespace').LOG_TRANSITIONS) {
       Ember.Logger.log("Transitioned into '" + EmberRouter._routePath(infos) + "'");
+    }
+  },
+
+  /**
+    Handles notifying any listeners of an impending URL
+    change.
+
+    Triggers the router level `willTransition` hook.
+
+    @method willTransition
+    @private
+    @since 1.11.0
+  */
+  willTransition: function(oldInfos, newInfos, transition) {
+    run.once(this, this.trigger, 'willTransition', transition);
+
+    if (get(this, 'namespace').LOG_TRANSITIONS) {
+      Ember.Logger.log("Preparing to transition from '" + EmberRouter._routePath(oldInfos) + "' to '" + EmberRouter._routePath(newInfos) + "'");
     }
   },
 
@@ -295,6 +313,11 @@ var EmberRouter = EmberObject.extend(Evented, {
     if (this.router) {
       this.router.reset();
     }
+  },
+
+  willDestroy: function() {
+    this._super.apply(this, arguments);
+    this.reset();
   },
 
   _lookupActiveView: function(templateName) {
@@ -414,6 +437,12 @@ var EmberRouter = EmberObject.extend(Evented, {
     router.didTransition = function(infos) {
       emberRouter.didTransition(infos);
     };
+
+    if (Ember.FEATURES.isEnabled('ember-router-willtransition')) {
+      router.willTransition = function(oldInfos, newInfos, transition) {
+        emberRouter.willTransition(oldInfos, newInfos, transition);
+      };
+    }
   },
 
   _serializeQueryParams: function(targetRouteName, queryParams) {
@@ -701,7 +730,7 @@ function logError(error, initialMessage) {
 
   if (error) {
     if (error.message) { errorArgs.push(error.message); }
-    if (error.stack)   { errorArgs.push(error.stack); }
+    if (error.stack) { errorArgs.push(error.stack); }
 
     if (typeof error === "string") { errorArgs.push(error); }
   }

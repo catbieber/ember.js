@@ -25,7 +25,7 @@ QUnit.module("ember-htmlbars: class attribute", {
   }
 });
 
-test("class renders before didInsertElement", function() {
+QUnit.test("class renders before didInsertElement", function() {
   var matchingElement;
   view = EmberView.create({
     didInsertElement: function() {
@@ -36,11 +36,11 @@ test("class renders before didInsertElement", function() {
   });
   appendView(view);
 
-  equalInnerHTML(view.element, '<div class="blue">Hi!</div>', "attribute is output");
+  equal(view.element.firstChild.className, 'blue', "attribute is output");
   equal(matchingElement.length, 1, 'element is in the DOM when didInsertElement');
 });
 
-test("class property can contain multiple classes", function() {
+QUnit.test("class property can contain multiple classes", function() {
   view = EmberView.create({
     context: { classes: 'large blue' },
     template: compile("<div class={{classes}}></div>")
@@ -53,23 +53,21 @@ test("class property can contain multiple classes", function() {
   ok(view.$('.blue')[0], 'second class found');
 });
 
-test("class property is removed when updated with a null value", function() {
+QUnit.test("class property is removed when updated with a null value", function() {
   view = EmberView.create({
     context: { class: 'large' },
     template: compile("<div class={{class}}></div>")
   });
   appendView(view);
 
-  equalInnerHTML(view.element, '<div class="large"></div>',
-                 "attribute is output");
+  equal(view.element.firstChild.className, 'large', "attribute is output");
 
   run(view, view.set, 'context.class', null);
 
-  equalInnerHTML(view.element, '<div></div>',
-                 "attribute is removed");
+  equal(view.element.firstChild.className, '', "attribute is removed");
 });
 
-test("class attribute concats bound values", function() {
+QUnit.test("class attribute concats bound values", function() {
   view = EmberView.create({
     context: { size: 'large', color: 'blue' },
     template: compile("<div class='{{size}} {{color}} round'></div>")
@@ -81,7 +79,7 @@ test("class attribute concats bound values", function() {
 
 if (isInlineIfEnabled) {
 
-test("class attribute accepts nested helpers, and updates", function() {
+QUnit.test("class attribute accepts nested helpers, and updates", function() {
   view = EmberView.create({
     context: {
       size: 'large',
@@ -103,7 +101,7 @@ test("class attribute accepts nested helpers, and updates", function() {
 
 }
 
-test("class attribute can accept multiple classes from a single value, and update", function() {
+QUnit.test("class attribute can accept multiple classes from a single value, and update", function() {
   view = EmberView.create({
     context: {
       size: 'large small'
@@ -119,7 +117,7 @@ test("class attribute can accept multiple classes from a single value, and updat
   ok(view.element.firstChild.className, 'medium', 'classes are updated');
 });
 
-test("class attribute can grok concatted classes, and update", function() {
+QUnit.test("class attribute can grok concatted classes, and update", function() {
   view = EmberView.create({
     context: {
       size: 'large',
@@ -137,7 +135,7 @@ test("class attribute can grok concatted classes, and update", function() {
   ok(view.element.firstChild.className, 'btn-large -post whoop', 'classes are updated');
 });
 
-test("class attribute stays in order", function() {
+QUnit.test("class attribute stays in order", function() {
   view = EmberView.create({
     context: {
       showA: 'a',

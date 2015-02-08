@@ -10,12 +10,19 @@ import "ember-htmlbars";
 import "ember-routing-htmlbars";
 
 import environment from "ember-metal/environment";
+import { runLoadHooks } from 'ember-runtime/system/lazy_load';
+
+if (Ember.__loader.registry['ember-template-compiler']) {
+  requireModule('ember-template-compiler');
+}
 
 // do this to ensure that Ember.Test is defined properly on the global
 // if it is present.
 if (Ember.__loader.registry['ember-testing']) {
   requireModule('ember-testing');
 }
+
+runLoadHooks('Ember');
 
 /**
 Ember

@@ -14,9 +14,7 @@ import {
   indexOf as a_indexOf,
   forEach as a_forEach
 } from "ember-metal/array";
-import {
-  create as o_create
-} from "ember-metal/platform";
+import o_create from "ember-metal/platform/create";
 import { get } from "ember-metal/property_get";
 import { set, trySet } from "ember-metal/property_set";
 import {
@@ -130,7 +128,7 @@ function concatenatedMixinProperties(concatProp, props, values, base) {
   return concats;
 }
 
-function giveDescriptorSuper(meta, key, property, values, descs) {
+function giveDescriptorSuper(meta, key, property, values, descs, base) {
   var superProperty;
 
   // Computed properties override methods, and do not call super to them
@@ -141,7 +139,12 @@ function giveDescriptorSuper(meta, key, property, values, descs) {
 
   // If we didn't find the original descriptor in a parent mixin, find
   // it on the original object.
-  superProperty = superProperty || meta.descs[key];
+  if (!superProperty) {
+    var possibleDesc = base[key];
+    var superDesc = (possibleDesc !== null && typeof possibleDesc === 'object' && possibleDesc.isDescriptor) ? possibleDesc : undefined;
+
+    superProperty = superDesc;
+  }
 
   if (superProperty === undefined || !(superProperty instanceof ComputedProperty)) {
     return property;
@@ -258,7 +261,7 @@ function addNormalizedProperty(base, key, value, meta, descs, values, concats, m
     // Wrap descriptor function to implement
     // __nextSuper() if needed
     if (value._getter) {
-      value = giveDescriptorSuper(meta, key, value, values, descs);
+      value = giveDescriptorSuper(meta, key, value, values, descs, base);
     }
 
     descs[key]  = value;
@@ -280,7 +283,7 @@ function addNormalizedProperty(base, key, value, meta, descs, values, concats, m
 }
 
 function mergeMixins(mixins, m, descs, values, base, keys) {
-  var mixin, props, key, concats, mergings, meta;
+  var currentMixin, props, key, concats, mergings, meta;
 
   function removeKeys(keyName) {
     delete descs[keyName];
@@ -288,11 +291,11 @@ function mergeMixins(mixins, m, descs, values, base, keys) {
   }
 
   for (var i=0, l=mixins.length; i<l; i++) {
-    mixin = mixins[i];
-    Ember.assert('Expected hash or Mixin instance, got ' + Object.prototype.toString.call(mixin),
-                 typeof mixin === 'object' && mixin !== null && Object.prototype.toString.call(mixin) !== '[object Array]');
+    currentMixin = mixins[i];
+    Ember.assert('Expected hash or Mixin instance, got ' + Object.prototype.toString.call(currentMixin),
+                 typeof currentMixin === 'object' && currentMixin !== null && Object.prototype.toString.call(currentMixin) !== '[object Array]');
 
-    props = mixinProperties(m, mixin);
+    props = mixinProperties(m, currentMixin);
     if (props === CONTINUE) { continue; }
 
     if (props) {
@@ -309,9 +312,9 @@ function mergeMixins(mixins, m, descs, values, base, keys) {
 
       // manually copy toString() because some JS engines do not enumerate it
       if (props.hasOwnProperty('toString')) { base.toString = props.toString; }
-    } else if (mixin.mixins) {
-      mergeMixins(mixin.mixins, m, descs, values, base, keys);
-      if (mixin._without) { a_forEach.call(mixin._without, removeKeys); }
+    } else if (currentMixin.mixins) {
+      mergeMixins(currentMixin.mixins, m, descs, values, base, keys);
+      if (currentMixin._without) { a_forEach.call(currentMixin._without, removeKeys); }
     }
   }
 }
@@ -390,11 +393,12 @@ function finishPartial(obj, m) {
 function followAlias(obj, desc, m, descs, values) {
   var altKey = desc.methodName;
   var value;
+  var possibleDesc;
   if (descs[altKey] || values[altKey]) {
     value = values[altKey];
     desc  = descs[altKey];
-  } else if (m.descs[altKey]) {
-    desc  = m.descs[altKey];
+  } else if ((possibleDesc = obj[altKey]) && possibleDesc !== null && typeof possibleDesc === 'object' && possibleDesc.isDescriptor) {
+    desc  = possibleDesc;
     value = undefined;
   } else {
     desc = undefined;
@@ -529,13 +533,13 @@ export function mixin(obj) {
 
   //filters will be a separate  array for every object implementing the mixin
   App.Filterable = Ember.Mixin.create({
-    filters: Ember.computed(function(){return Ember.A();})
+    filters: Ember.computed(function() {return Ember.A();})
   });
 
   //filters will be created as a separate array during the object's initialization
   App.Filterable = Ember.Mixin.create({
     init: function() {
-      this._super();
+      this._super.apply(this, arguments);
       this.set("filters", Ember.A());
     }
   });
@@ -605,12 +609,12 @@ var MixinPrototype = Mixin.prototype;
   @param arguments*
 */
 MixinPrototype.reopen = function() {
-  var mixin;
+  var currentMixin;
 
   if (this.properties) {
-    mixin = new Mixin(undefined, this.properties);
+    currentMixin = new Mixin(undefined, this.properties);
     this.properties = undefined;
-    this.mixins = [mixin];
+    this.mixins = [currentMixin];
   } else if (!this.mixins) {
     this.mixins = [];
   }
@@ -620,15 +624,15 @@ MixinPrototype.reopen = function() {
   var idx;
 
   for (idx=0; idx < len; idx++) {
-    mixin = arguments[idx];
-    Ember.assert('Expected hash or Mixin instance, got ' + Object.prototype.toString.call(mixin),
-                 typeof mixin === 'object' && mixin !== null &&
-                   Object.prototype.toString.call(mixin) !== '[object Array]');
+    currentMixin = arguments[idx];
+    Ember.assert('Expected hash or Mixin instance, got ' + Object.prototype.toString.call(currentMixin),
+                 typeof currentMixin === 'object' && currentMixin !== null &&
+                   Object.prototype.toString.call(currentMixin) !== '[object Array]');
 
-    if (mixin instanceof Mixin) {
-      mixins.push(mixin);
+    if (currentMixin instanceof Mixin) {
+      mixins.push(currentMixin);
     } else {
-      mixins.push(new Mixin(undefined, mixin));
+      mixins.push(new Mixin(undefined, currentMixin));
     }
   }
 
@@ -722,10 +726,10 @@ Mixin.mixins = function(obj) {
   if (!mixins) { return ret; }
 
   for (var key in mixins) {
-    var mixin = mixins[key];
+    var currentMixin = mixins[key];
 
     // skip primitive mixins since these are always anonymous
-    if (!mixin.properties) { ret.push(mixin); }
+    if (!currentMixin.properties) { ret.push(currentMixin); }
   }
 
   return ret;
@@ -745,6 +749,7 @@ export function required() {
 }
 
 function Alias(methodName) {
+  this.isDescriptor = true;
   this.methodName = methodName;
 }
 

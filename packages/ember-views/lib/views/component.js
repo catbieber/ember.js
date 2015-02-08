@@ -20,7 +20,7 @@ var a_slice = Array.prototype.slice;
 
 /**
   An `Ember.Component` is a view that is completely
-  isolated. Property access in its templates go
+  isolated. Properties accessed in its templates go
   to the view object and actions are targeted at
   the view object. There is no access to the
   surrounding context or outer controller; all
@@ -112,7 +112,8 @@ var Component = View.extend(TargetActionSupport, ComponentTemplateDeprecation, {
   }),
 
   init: function() {
-    this._super();
+    this._super.apply(this, arguments);
+    this._keywords.view = this;
     set(this, 'context', this);
     set(this, 'controller', this);
   },
@@ -158,9 +159,7 @@ var Component = View.extend(TargetActionSupport, ComponentTemplateDeprecation, {
   */
   templateName: null,
 
-  _setupKeywords: function() {
-    this._keywords.view.setSource(this);
-  },
+  _setupKeywords: function() {},
 
   _yield: function(context, options, morph, blockArguments) {
     var view = options.data.view;
@@ -192,7 +191,7 @@ var Component = View.extend(TargetActionSupport, ComponentTemplateDeprecation, {
     @default null
   */
   targetObject: computed(function(key) {
-    var parentView = get(this, '_parentView');
+    var parentView = this._parentView;
     return parentView ? get(parentView, 'controller') : null;
   }).property('_parentView'),
 
@@ -207,7 +206,7 @@ var Component = View.extend(TargetActionSupport, ComponentTemplateDeprecation, {
 
     ```javascript
     App.PlayButtonComponent = Ember.Component.extend({
-      click: function(){
+      click: function() {
         if (this.get('isPlaying')) {
           this.sendAction('play');
         } else {
@@ -234,11 +233,11 @@ var Component = View.extend(TargetActionSupport, ComponentTemplateDeprecation, {
     ```javascript
     App.ApplicationController = Ember.Controller.extend({
       actions: {
-        musicStarted: function(){
+        musicStarted: function() {
           // called when the play button is clicked
           // and the music started playing
         },
-        musicStopped: function(){
+        musicStopped: function() {
           // called when the play button is clicked
           // and the music stopped playing
         }
@@ -251,7 +250,7 @@ var Component = View.extend(TargetActionSupport, ComponentTemplateDeprecation, {
 
     ```javascript
     App.NextButtonComponent = Ember.Component.extend({
-      click: function(){
+      click: function() {
         this.sendAction();
       }
     });
@@ -265,7 +264,7 @@ var Component = View.extend(TargetActionSupport, ComponentTemplateDeprecation, {
     ```javascript
     App.ApplicationController = Ember.Controller.extend({
       actions: {
-        playNextSongInAlbum: function(){
+        playNextSongInAlbum: function() {
           ...
         }
       }

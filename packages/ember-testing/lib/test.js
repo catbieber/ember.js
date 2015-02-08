@@ -1,7 +1,6 @@
 import Ember from "ember-metal/core";
 import emberRun from "ember-metal/run_loop";
-import { create } from "ember-metal/platform";
-import compare from "ember-runtime/compare";
+import create from 'ember-metal/platform/create';
 import RSVP from "ember-runtime/ext/rsvp";
 import setupForTesting from "ember-testing/setup_for_testing";
 import EmberApplication from "ember-application/system/application";
@@ -265,15 +264,13 @@ var Test = {
      @since 1.2.0
   */
   unregisterWaiter: function(context, callback) {
-    var pair;
     if (!this.waiters) { return; }
     if (arguments.length === 1) {
       callback = context;
       context = null;
     }
-    pair = [context, callback];
     this.waiters = Ember.A(this.waiters.filter(function(elt) {
-      return compare(elt, pair)!==0;
+      return !(elt[0] === context && elt[1] === callback);
     }));
   }
 };
@@ -299,11 +296,18 @@ function helper(app, name) {
       // It's the first async helper in current context
       lastPromise = fn.apply(app, args);
     } else {
-      // wait for last helper's promise to resolve
-      // and then execute
+      // wait for last helper's promise to resolve and then
+      // execute. To be safe, we need to tell the adapter we're going
+      // asynchronous here, because fn may not be invoked before we
+      // return.
+      Test.adapter.asyncStart();
       run(function() {
         lastPromise = Test.resolve(lastPromise).then(function() {
-          return fn.apply(app, args);
+          try {
+            return fn.apply(app, args);
+          } finally {
+            Test.adapter.asyncEnd();
+          }
         });
       });
     }

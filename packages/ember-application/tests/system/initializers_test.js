@@ -2,6 +2,7 @@ import run from "ember-metal/run_loop";
 import Application from "ember-application/system/application";
 import { indexOf } from "ember-metal/array";
 import jQuery from "ember-views/system/jquery";
+import Registry from "container/registry";
 
 var app;
 
@@ -16,7 +17,7 @@ QUnit.module("Ember.Application initializers", {
   }
 });
 
-test("initializers require proper 'name' and 'initialize' properties", function() {
+QUnit.test("initializers require proper 'name' and 'initialize' properties", function() {
   var MyApplication = Application.extend();
 
   expectAssertion(function() {
@@ -33,7 +34,26 @@ test("initializers require proper 'name' and 'initialize' properties", function(
 
 });
 
-test("initializers can be registered in a specified order", function() {
+QUnit.test("initializers are passed a registry and App", function() {
+  var MyApplication = Application.extend();
+
+  MyApplication.initializer({
+    name: 'initializer',
+    initialize: function(registry, App) {
+      ok(registry instanceof Registry, "initialize is passed a registry");
+      ok(App instanceof Application, "initialize is passed an Application");
+    }
+  });
+
+  run(function() {
+    app = MyApplication.create({
+      router: false,
+      rootElement: '#qunit-fixture'
+    });
+  });
+});
+
+QUnit.test("initializers can be registered in a specified order", function() {
   var order = [];
   var MyApplication = Application.extend();
   MyApplication.initializer({
@@ -94,7 +114,70 @@ test("initializers can be registered in a specified order", function() {
   deepEqual(order, ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']);
 });
 
-test("initializers can have multiple dependencies", function () {
+QUnit.test("initializers can be registered in a specified order as an array", function() {
+  var order = [];
+  var MyApplication = Application.extend();
+
+
+  MyApplication.initializer({
+    name: 'third',
+    initialize: function(registry) {
+      order.push('third');
+    }
+  });
+
+  MyApplication.initializer({
+    name: 'second',
+    after: 'first',
+    before: ['third', 'fourth'],
+    initialize: function(registry) {
+      order.push('second');
+    }
+  });
+
+  MyApplication.initializer({
+    name: 'fourth',
+    after: ['second', 'third'],
+    initialize: function(registry) {
+      order.push('fourth');
+    }
+  });
+
+  MyApplication.initializer({
+    name: 'fifth',
+    after: 'fourth',
+    before: 'sixth',
+    initialize: function(registry) {
+      order.push('fifth');
+    }
+  });
+
+  MyApplication.initializer({
+    name: 'first',
+    before: ['second'],
+    initialize: function(registry) {
+      order.push('first');
+    }
+  });
+
+  MyApplication.initializer({
+    name: 'sixth',
+    initialize: function(registry) {
+      order.push('sixth');
+    }
+  });
+
+  run(function() {
+    app = MyApplication.create({
+      router: false,
+      rootElement: '#qunit-fixture'
+    });
+  });
+
+  deepEqual(order, ['first', 'second', 'third', 'fourth', 'fifth', 'sixth']);
+});
+
+QUnit.test("initializers can have multiple dependencies", function () {
   var order = [];
   var a = {
     name: "a",
@@ -150,7 +233,7 @@ test("initializers can have multiple dependencies", function () {
   ok(indexOf.call(order, c.name) < indexOf.call(order, afterC.name), 'c < afterC');
 });
 
-test("initializers set on Application subclasses should not be shared between apps", function() {
+QUnit.test("initializers set on Application subclasses should not be shared between apps", function() {
   var firstInitializerRunCount = 0;
   var secondInitializerRunCount = 0;
   var FirstApp = Application.extend();
@@ -186,7 +269,7 @@ test("initializers set on Application subclasses should not be shared between ap
   equal(secondInitializerRunCount, 1, 'second initializer only was run');
 });
 
-test("initializers are concatenated", function() {
+QUnit.test("initializers are concatenated", function() {
   var firstInitializerRunCount = 0;
   var secondInitializerRunCount = 0;
   var FirstApp = Application.extend();
@@ -225,7 +308,7 @@ test("initializers are concatenated", function() {
   equal(secondInitializerRunCount, 1, 'second initializers was run when subclass created');
 });
 
-test("initializers are per-app", function() {
+QUnit.test("initializers are per-app", function() {
   expect(0);
   var FirstApp = Application.extend();
   FirstApp.initializer({
@@ -241,7 +324,7 @@ test("initializers are per-app", function() {
 });
 
 if (Ember.FEATURES.isEnabled("ember-application-initializer-context")) {
-  test("initializers should be executed in their own context", function() {
+  QUnit.test("initializers should be executed in their own context", function() {
     expect(1);
     var MyApplication = Application.extend();
 

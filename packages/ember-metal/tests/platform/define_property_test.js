@@ -1,4 +1,8 @@
-import { defineProperty, hasPropertyAccessors, canDefineNonEnumerableProperties } from 'ember-metal/platform';
+import {
+  defineProperty,
+  hasPropertyAccessors,
+  canDefineNonEnumerableProperties
+} from 'ember-metal/platform/define_property';
 import EnumerableUtils from 'ember-metal/enumerable_utils';
 
 function isEnumerable(obj, keyName) {
@@ -13,7 +17,7 @@ function isEnumerable(obj, keyName) {
 
 QUnit.module("defineProperty()");
 
-test("defining a simple property", function() {
+QUnit.test("defining a simple property", function() {
   var obj = {};
   defineProperty(obj, 'foo', {
     enumerable:   true,
@@ -28,7 +32,7 @@ test("defining a simple property", function() {
   equal(isEnumerable(obj, 'foo'), true, 'foo should be enumerable');
 });
 
-test('defining a read only property', function() {
+QUnit.test('defining a read only property', function() {
   var obj = {};
   defineProperty(obj, 'foo', {
     enumerable:   true,
@@ -53,7 +57,7 @@ test('defining a read only property', function() {
   }
 });
 
-test('defining a non enumerable property', function() {
+QUnit.test('defining a non enumerable property', function() {
   var obj = {};
   defineProperty(obj, 'foo', {
     enumerable:   false,
@@ -71,7 +75,7 @@ test('defining a non enumerable property', function() {
 // If accessors don't exist, behavior that relies on getters
 // and setters don't do anything
 if (hasPropertyAccessors) {
-  test('defining a getter/setter', function() {
+  QUnit.test('defining a getter/setter', function() {
     var obj = {};
     var getCnt = 0;
     var setCnt = 0;
@@ -98,9 +102,9 @@ if (hasPropertyAccessors) {
     equal(setCnt, 1, 'should have invoked setter');
   });
 
-  test('defining getter/setter along with writable', function() {
+  QUnit.test('defining getter/setter along with writable', function() {
     var obj  ={};
-    raises(function() {
+    throws(function() {
       defineProperty(obj, 'foo', {
         enumerable: true,
         get: function() {},
@@ -110,9 +114,9 @@ if (hasPropertyAccessors) {
     }, Error, 'defining writable and get/set should throw exception');
   });
 
-  test('defining getter/setter along with value', function() {
+  QUnit.test('defining getter/setter along with value', function() {
     var obj  ={};
-    raises(function() {
+    throws(function() {
       defineProperty(obj, 'foo', {
         enumerable: true,
         get: function() {},

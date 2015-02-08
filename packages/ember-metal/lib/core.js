@@ -1,4 +1,4 @@
-/*globals Ember:true,ENV,EmberENV,MetamorphENV:true */
+/*globals Ember:true,ENV,EmberENV */
 
 /**
 @module ember
@@ -32,12 +32,13 @@ if ('undefined' === typeof Ember) {
 }
 
 // Default imports, exports and lookup to the global object;
-Ember.imports = Ember.imports || this;
-Ember.lookup  = Ember.lookup  || this;
-var exports   = Ember.exports = Ember.exports || this;
+var global = mainContext || {}; // jshint ignore:line
+Ember.imports = Ember.imports || global;
+Ember.lookup  = Ember.lookup  || global;
+var emExports   = Ember.exports = Ember.exports || global;
 
 // aliases needed to keep minifiers from removing the global context
-exports.Em = exports.Ember = Ember;
+emExports.Em = emExports.Ember = Ember;
 
 // Make sure these are set whether Ember was already defined or not
 
@@ -83,16 +84,10 @@ if ('undefined' === typeof Ember.ENV.DISABLE_RANGE_API) {
   Ember.ENV.DISABLE_RANGE_API = true;
 }
 
-if ("undefined" === typeof MetamorphENV) {
-  exports.MetamorphENV = {};
-}
-
-MetamorphENV.DISABLE_RANGE_API = Ember.ENV.DISABLE_RANGE_API;
-
 /**
   Hash of enabled Canary features. Add to this before creating your application.
 
-  You can also define `ENV.FEATURES` if you need to enable features flagged at runtime.
+  You can also define `EmberENV.FEATURES` if you need to enable features flagged at runtime.
 
   @class FEATURES
   @namespace Ember
@@ -100,7 +95,11 @@ MetamorphENV.DISABLE_RANGE_API = Ember.ENV.DISABLE_RANGE_API;
   @since 1.1.0
 */
 
-Ember.FEATURES = Ember.ENV.FEATURES || {};
+Ember.FEATURES = Ember.ENV.FEATURES;
+
+if (!Ember.FEATURES) {
+  Ember.FEATURES = DEFAULT_FEATURES; //jshint ignore:line
+}
 
 /**
   Test that a feature is enabled. Parsed by Ember's build tools to leave
@@ -108,8 +107,8 @@ Ember.FEATURES = Ember.ENV.FEATURES || {};
 
   You can define the following configuration options:
 
-  * `ENV.ENABLE_ALL_FEATURES` - force all features to be enabled.
-  * `ENV.ENABLE_OPTIONAL_FEATURES` - enable any features that have not been explicitly
+  * `EmberENV.ENABLE_ALL_FEATURES` - force all features to be enabled.
+  * `EmberENV.ENABLE_OPTIONAL_FEATURES` - enable any features that have not been explicitly
     enabled/disabled.
 
   @method isEnabled
@@ -145,7 +144,7 @@ Ember.FEATURES.isEnabled = function(feature) {
 
   In general we recommend leaving this option set to true since it rarely
   conflicts with other code. If you need to turn it off however, you can
-  define an `ENV.EXTEND_PROTOTYPES` config to disable it.
+  define an `EmberENV.EXTEND_PROTOTYPES` config to disable it.
 
   @property EXTEND_PROTOTYPES
   @type Boolean

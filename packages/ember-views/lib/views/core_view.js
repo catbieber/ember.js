@@ -1,5 +1,5 @@
 import Renderer from "ember-views/system/renderer";
-import { DOMHelper } from "morph";
+import DOMHelper from "dom-helper";
 
 import {
   cloneStates,
@@ -44,7 +44,7 @@ var CoreView = EmberObject.extend(Evented, ActionHandler, {
   _states: cloneStates(states),
 
   init: function() {
-    this._super();
+    this._super.apply(this, arguments);
     this._state = 'preRender';
     this.currentState = this._states.preRender;
     this._isVisible = get(this, 'isVisible');
@@ -125,7 +125,7 @@ var CoreView = EmberObject.extend(Evented, ActionHandler, {
   destroy: function() {
     var parent = this._parentView;
 
-    if (!this._super()) { return; }
+    if (!this._super.apply(this, arguments)) { return; }
 
 
     // destroy the element -- this will avoid each child view destroying
@@ -147,6 +147,10 @@ var CoreView = EmberObject.extend(Evented, ActionHandler, {
   clearRenderedChildren: K,
   _transitionTo: K,
   destroyElement: K
+});
+
+CoreView.reopenClass({
+  isViewClass: true
 });
 
 export default CoreView;

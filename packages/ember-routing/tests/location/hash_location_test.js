@@ -55,7 +55,7 @@ QUnit.module("Ember.HashLocation", {
   }
 });
 
-test("base URL is removed when retrieving the current pathname", function() {
+QUnit.test("base URL is removed when retrieving the current pathname", function() {
   expect(1);
 
   HashTestLocation.reopen({
@@ -71,7 +71,7 @@ test("base URL is removed when retrieving the current pathname", function() {
   equal(location.getURL(), '/foo/bar');
 });
 
-test("base URL is preserved when moving around", function() {
+QUnit.test("base URL is preserved when moving around", function() {
   expect(1);
 
   HashTestLocation.reopen({
@@ -90,7 +90,7 @@ test("base URL is preserved when moving around", function() {
   equal(location.formatURL('/one/two'), '/base/#/one/two');
 });
 
-test("HashLocation.getURL() returns the current url", function() {
+QUnit.test("HashLocation.getURL() returns the current url", function() {
   expect(1);
 
   createLocation({
@@ -100,7 +100,7 @@ test("HashLocation.getURL() returns the current url", function() {
   equal(location.getURL(), '/foo/bar');
 });
 
-test("HashLocation.getURL() returns the current url excluding both baseURL and rootURL", function() {
+QUnit.test("HashLocation.getURL() returns the current url excluding both baseURL and rootURL", function() {
   expect(1);
 
   HashTestLocation.reopen({
@@ -119,7 +119,7 @@ test("HashLocation.getURL() returns the current url excluding both baseURL and r
   equal(location.getURL(), '/foo/bar');
 });
 
-test("HashLocation.getURL() includes extra hashes", function() {
+QUnit.test("HashLocation.getURL() includes extra hashes", function() {
   expect(1);
 
   createLocation({
@@ -129,7 +129,7 @@ test("HashLocation.getURL() includes extra hashes", function() {
   equal(location.getURL(), '/foo#bar#car');
 });
 
-test("HashLocation.getURL() assumes location.hash without #/ prefix is not a route path", function() {
+QUnit.test("HashLocation.getURL() assumes location.hash without #/ prefix is not a route path", function() {
   expect(1);
 
   createLocation({
@@ -139,7 +139,7 @@ test("HashLocation.getURL() assumes location.hash without #/ prefix is not a rou
   equal(location.getURL(), '/#foo#bar');
 });
 
-test("HashLocation.getURL() returns a normal forward slash when there is no location.hash", function() {
+QUnit.test("HashLocation.getURL() returns a normal forward slash when there is no location.hash", function() {
   expect(1);
 
   createLocation({
@@ -149,7 +149,7 @@ test("HashLocation.getURL() returns a normal forward slash when there is no loca
   equal(location.getURL(), '/');
 });
 
-test("HashLocation.setURL() correctly sets the url", function() {
+QUnit.test("HashLocation.setURL() correctly sets the url", function() {
   expect(2);
 
   createLocation();
@@ -160,7 +160,7 @@ test("HashLocation.setURL() correctly sets the url", function() {
   equal(get(location, 'lastSetURL'), '/bar');
 });
 
-test("HashLocation.replaceURL() correctly replaces to the path with a page reload", function() {
+QUnit.test("HashLocation.replaceURL() correctly replaces to the path with a page reload", function() {
   expect(2);
 
   createLocation({
@@ -176,7 +176,7 @@ test("HashLocation.replaceURL() correctly replaces to the path with a page reloa
   equal(get(location, 'lastSetURL'), '/foo');
 });
 
-test("HashLocation.onUpdateURL() registers a hashchange callback", function() {
+QUnit.test("HashLocation.onUpdateURL() registers a hashchange callback", function() {
   expect(3);
 
   var oldJquery = Ember.$;
@@ -204,7 +204,7 @@ test("HashLocation.onUpdateURL() registers a hashchange callback", function() {
   Ember.$ = oldJquery;
 });
 
-test("HashLocation.formatURL() prepends a # to the provided string", function() {
+QUnit.test("HashLocation.formatURL() prepends a # to the provided string", function() {
   expect(1);
 
   createLocation();
@@ -212,7 +212,7 @@ test("HashLocation.formatURL() prepends a # to the provided string", function() 
   equal(location.formatURL('/foo#bar'), '#/foo#bar');
 });
 
-test("HashLocation.willDestroy() cleans up hashchange event listener", function() {
+QUnit.test("HashLocation.willDestroy() cleans up hashchange event listener", function() {
   expect(2);
 
   var oldJquery = Ember.$;

@@ -31,10 +31,7 @@ function Container(registry, options) {
 
   this.cache        = dictionary(options && options.cache ? options.cache : null);
   this.factoryCache = dictionary(options && options.factoryCache ? options.factoryCache : null);
-
-  if (Ember.FEATURES.isEnabled('ember-metal-injected-properties')) {
-    this.validationCache = dictionary(options && options.validationCache ? options.validationCache : null);
-  }
+  this.validationCache = dictionary(options && options.validationCache ? options.validationCache : null);
 }
 
 Container.prototype = {
@@ -270,8 +267,8 @@ function injectionsFor(container, fullName) {
   var type = splitName[0];
 
   var injections = buildInjections(container,
-                                   registry.typeInjections[type],
-                                   registry.injections[fullName]);
+                                   registry.getTypeInjections(type),
+                                   registry.getInjections(fullName));
   injections._debugContainerKey = fullName;
   injections.container = container;
 
@@ -284,8 +281,8 @@ function factoryInjectionsFor(container, fullName) {
   var type = splitName[0];
 
   var factoryInjections = buildInjections(container,
-                                          registry.factoryTypeInjections[type],
-                                          registry.factoryInjections[fullName]);
+                                          registry.getFactoryTypeInjections(type),
+                                          registry.getFactoryInjections(fullName));
   factoryInjections._debugContainerKey = fullName;
 
   return factoryInjections;
@@ -305,19 +302,17 @@ function instantiate(container, fullName) {
       'Most likely an improperly defined class or an invalid module export.');
     }
 
-    if (Ember.FEATURES.isEnabled('ember-metal-injected-properties')) {
-      validationCache = container.validationCache;
+    validationCache = container.validationCache;
 
-      // Ensure that all lazy injections are valid at instantiation time
-      if (!validationCache[fullName] && typeof factory._lazyInjections === 'function') {
-        lazyInjections = factory._lazyInjections();
-        lazyInjections = container._registry.normalizeInjectionsHash(lazyInjections);
+    // Ensure that all lazy injections are valid at instantiation time
+    if (!validationCache[fullName] && typeof factory._lazyInjections === 'function') {
+      lazyInjections = factory._lazyInjections();
+      lazyInjections = container._registry.normalizeInjectionsHash(lazyInjections);
 
-        container._registry.validateInjections(lazyInjections);
-      }
-
-      validationCache[fullName] = true;
+      container._registry.validateInjections(lazyInjections);
     }
+
+    validationCache[fullName] = true;
 
     if (typeof factory.extend === 'function') {
       // assume the factory was extendable and is already injected

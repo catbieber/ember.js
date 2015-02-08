@@ -3,7 +3,6 @@
 @submodule ember-views
 */
 
-import run from 'ember-metal/run_loop';
 import _MetamorphView from "ember-views/views/metamorph_view";
 import NormalizedRerenderIfNeededSupport from "ember-views/mixins/normalized_rerender_if_needed";
 import lookupPartial from "ember-views/system/lookup_partial";
@@ -13,7 +12,7 @@ import emptyTemplate from "ember-htmlbars/templates/empty";
 
 export default _MetamorphView.extend(NormalizedRerenderIfNeededSupport, {
   init: function() {
-    this._super();
+    this._super.apply(this, arguments);
 
     var self = this;
 

@@ -1,6 +1,6 @@
 import environment from "ember-metal/environment";
 
-import { DOMHelper } from "morph";
+import DOMHelper from "dom-helper";
 
 import inline from "ember-htmlbars/hooks/inline";
 import content from "ember-htmlbars/hooks/content";
@@ -29,7 +29,9 @@ export default {
     concat: concat
   },
 
-  helpers: helpers
+  helpers: helpers,
+
+  useFragmentCache: true
 };
 
 var domHelper = environment.hasDOM ? new DOMHelper() : null;

@@ -57,13 +57,13 @@ QUnit.module("Ember.HistoryLocation", {
   }
 });
 
-test("HistoryLocation initState does not get fired on init", function() {
+QUnit.test("HistoryLocation initState does not get fired on init", function() {
   expect(1);
 
   HistoryTestLocation.reopen({
     init: function() {
       ok(true, 'init was called');
-      this._super();
+      this._super.apply(this, arguments);
     },
     initState: function() {
       ok(false, 'initState() should not be called automatically');
@@ -73,12 +73,12 @@ test("HistoryLocation initState does not get fired on init", function() {
   createLocation();
 });
 
-test("webkit doesn't fire popstate on page load", function() {
+QUnit.test("webkit doesn't fire popstate on page load", function() {
   expect(1);
 
   HistoryTestLocation.reopen({
     initState: function() {
-      this._super();
+      this._super.apply(this, arguments);
       // these two should be equal to be able
       // to successfully detect webkit initial popstate
       equal(this._previousURL, this.getURL());
@@ -89,19 +89,19 @@ test("webkit doesn't fire popstate on page load", function() {
   location.initState();
 });
 
-test("base URL is removed when retrieving the current pathname", function() {
+QUnit.test("base URL is removed when retrieving the current pathname", function() {
   expect(1);
 
   HistoryTestLocation.reopen({
     init: function() {
-      this._super();
+      this._super.apply(this, arguments);
 
       set(this, 'location', mockBrowserLocation('/base/foo/bar'));
       set(this, 'baseURL', '/base/');
     },
 
     initState: function() {
-      this._super();
+      this._super.apply(this, arguments);
 
       equal(this.getURL(), '/foo/bar');
     }
@@ -111,12 +111,12 @@ test("base URL is removed when retrieving the current pathname", function() {
   location.initState();
 });
 
-test("base URL is preserved when moving around", function() {
+QUnit.test("base URL is preserved when moving around", function() {
   expect(1);
 
   HistoryTestLocation.reopen({
     init: function() {
-      this._super();
+      this._super.apply(this, arguments);
 
       set(this, 'location', mockBrowserLocation('/base/foo/bar'));
       set(this, 'baseURL', '/base/');
@@ -130,7 +130,7 @@ test("base URL is preserved when moving around", function() {
   equal(location._historyState.path, '/base/one/two');
 });
 
-test("setURL continues to set even with a null state (iframes may set this)", function() {
+QUnit.test("setURL continues to set even with a null state (iframes may set this)", function() {
   expect(1);
 
   createLocation();
@@ -142,7 +142,7 @@ test("setURL continues to set even with a null state (iframes may set this)", fu
   equal(location._historyState.path, '/three/four');
 });
 
-test("replaceURL continues to set even with a null state (iframes may set this)", function() {
+QUnit.test("replaceURL continues to set even with a null state (iframes may set this)", function() {
   expect(1);
 
   createLocation();
@@ -154,12 +154,12 @@ test("replaceURL continues to set even with a null state (iframes may set this)"
   equal(location._historyState.path, '/three/four');
 });
 
-test("HistoryLocation.getURL() returns the current url, excluding both rootURL and baseURL", function() {
+QUnit.test("HistoryLocation.getURL() returns the current url, excluding both rootURL and baseURL", function() {
   expect(1);
 
   HistoryTestLocation.reopen({
     init: function() {
-      this._super();
+      this._super.apply(this, arguments);
 
       set(this, 'location', mockBrowserLocation('/base/foo/bar'));
       set(this, 'rootURL', '/app/');
@@ -172,12 +172,12 @@ test("HistoryLocation.getURL() returns the current url, excluding both rootURL a
   equal(location.getURL(), '/foo/bar');
 });
 
-test("HistoryLocation.getURL() includes location.search", function() {
+QUnit.test("HistoryLocation.getURL() includes location.search", function() {
   expect(1);
 
   HistoryTestLocation.reopen({
     init: function() {
-      this._super();
+      this._super.apply(this, arguments);
       set(this, 'location', mockBrowserLocation('/foo/bar?time=morphin'));
     }
   });
@@ -187,12 +187,12 @@ test("HistoryLocation.getURL() includes location.search", function() {
   equal(location.getURL(), '/foo/bar?time=morphin');
 });
 
-test("HistoryLocation.getURL() includes location.hash", function() {
+QUnit.test("HistoryLocation.getURL() includes location.hash", function() {
   expect(1);
 
   HistoryTestLocation.reopen({
     init: function() {
-      this._super();
+      this._super.apply(this, arguments);
       set(this, 'location', mockBrowserLocation('/foo/bar#pink-power-ranger'));
     }
   });
@@ -202,12 +202,12 @@ test("HistoryLocation.getURL() includes location.hash", function() {
   equal(location.getURL(), '/foo/bar#pink-power-ranger');
 });
 
-test("HistoryLocation.getURL() includes location.hash and location.search", function() {
+QUnit.test("HistoryLocation.getURL() includes location.hash and location.search", function() {
   expect(1);
 
   HistoryTestLocation.reopen({
     init: function() {
-      this._super();
+      this._super.apply(this, arguments);
       set(this, 'location', mockBrowserLocation('/foo/bar?time=morphin#pink-power-ranger'));
     }
   });

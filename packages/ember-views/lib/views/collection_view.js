@@ -225,7 +225,7 @@ var CollectionView = ContainerView.extend({
     @method init
   */
   init: function() {
-    var ret = this._super();
+    var ret = this._super.apply(this, arguments);
     this._contentDidChange();
     return ret;
   },
@@ -282,7 +282,7 @@ var CollectionView = ContainerView.extend({
     @method destroy
   */
   destroy: function() {
-    if (!this._super()) { return; }
+    if (!this._super.apply(this, arguments)) { return; }
 
     var content = get(this, 'content');
     if (content) { content.removeArrayObserver(this); }
@@ -355,7 +355,7 @@ var CollectionView = ContainerView.extend({
 
       for (idx = start; idx < start+added; idx++) {
         item = content.objectAt(idx);
-
+        itemViewProps._context = this.keyword ? this.get('context') : item;
         itemViewProps.content = item;
         itemViewProps.contentIndex = idx;
 

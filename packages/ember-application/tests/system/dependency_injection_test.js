@@ -26,7 +26,7 @@ QUnit.module("Ember.Application Dependency Injection", {
     application.register('communication:main', application.Email, { singleton: false });
     application.register('controller:postIndex', application.PostIndexController, { singleton: true });
 
-    registry = application.__registry__;
+    registry = application.registry;
     locator = application.__container__;
 
     lookup = Ember.lookup = {};
@@ -39,7 +39,7 @@ QUnit.module("Ember.Application Dependency Injection", {
   }
 });
 
-test('container lookup is normalized', function() {
+QUnit.test('container lookup is normalized', function() {
   var dotNotationController = locator.lookup('controller:post.index');
   var camelCaseController = locator.lookup('controller:postIndex');
 
@@ -49,7 +49,7 @@ test('container lookup is normalized', function() {
   equal(dotNotationController, camelCaseController);
 });
 
-test('registered entities can be looked up later', function() {
+QUnit.test('registered entities can be looked up later', function() {
   equal(registry.resolve('model:person'), application.Person);
   equal(registry.resolve('model:user'), application.User);
   equal(registry.resolve('fruit:favorite'), application.Orange);
@@ -61,7 +61,7 @@ test('registered entities can be looked up later', function() {
 });
 
 
-test('injections', function() {
+QUnit.test('injections', function() {
   application.inject('model', 'fruit', 'fruit:favorite');
   application.inject('model:user', 'communication', 'communication:main');
 

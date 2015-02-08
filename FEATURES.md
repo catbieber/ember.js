@@ -5,6 +5,35 @@ for a detailed explanation.
 
 ## Feature Flags
 
+* `ember-application-visit`
+
+  Provides an API for creating an application instance and specifying
+  an initial URL that it should route to. This is useful for testing
+  (you can have multiple instances of an app without having to run
+  serially and call `reset()` each time), as well as being critical to
+  for FastBoot.
+
+* `ember-application-instance-initializers`
+
+  Splits apart initializers into two phases:
+
+  * Boot-time Initializers that receive a registry, and use it to set up
+    code structures
+  * Instance Initializers that receive an application instance, and use
+    it to set up application state per run of the application.
+
+  In FastBoot, each request will have its own run of the application,
+  and will only need to run the instance initializers.
+
+  In the future, tests will also be able to use this differentiation to
+  run just the instance initializers per-test.
+
+  With this change, `App.initializer` becomes a "boot-time" initializer,
+  and issues a deprecation warning if instances are accessed.
+
+  Apps should migrate any initializers that require instances to the new
+  `App.instanceInitializer` API.
+
 * `ember-application-initializer-context`
 
   Sets the context of the initializer function to its object instead of the
@@ -114,17 +143,6 @@ for a detailed explanation.
 
   Added in [#9721](https://github.com/emberjs/ember.js/pull/9721).
 
-* `ember-metal-injected-properties`
-
-  Enables the injection of properties onto objects coming from a container,
-  and adds the `Ember.Service` class.  Use the `Ember.inject.service` method to
-  inject services onto any object, or `Ember.inject.controller` to inject
-  controllers onto any other controller. The first argument to `Ember.inject`
-  methods is optional, and if left blank the key of the property will be used
-  to perform the lookup instead.  Replaces the need for `needs` in controllers.
-
-  Added in [#5162](https://github.com/emberjs/ember.js/pull/5162).
-
 * `ember-routing-transitioning-classes`
 
   Disables eager URL updates during slow transitions in favor of new CSS
@@ -142,6 +160,21 @@ for a detailed explanation.
   Enables the new computed property syntax. In this new syntax, instead of passing
   a function that acts both as getter and setter for the property, `Ember.computed`
   receives an object with `get` and `set` keys, each one containing a function.
+
+  For example,
+
+  ```js
+  visible: Ember.computed('visibility', {
+    get: function(key) {
+      return this.get('visibility') !== 'hidden';
+    },
+    set: function(key, boolValue) {
+      this.set('visibility', boolValue ? 'visible' : 'hidden');
+      return boolValue;
+    }
+  })
+  ```
+
   If the object does not contain a `set` key, the property will simply be overridden.
   Passing just function is still supported, and is equivalent to passing only a getter.
 
@@ -168,3 +201,17 @@ for a detailed explanation.
   ```
 
   Added in [#10160](https://github.com/emberjs/ember.js/pull/10160)
+
+* `ember-router-willtransition`
+
+  Adds `willTransition` hook to `Ember.Router`. For example,
+
+  ```js
+  Ember.Router.extend({
+    onBeforeTransition: function(transition) {
+      //doSomething
+    }.on('willTransition')
+  });
+  ```
+
+  Added in [#10274](https://github.com/emberjs/ember.js/pull/10274)

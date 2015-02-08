@@ -2,7 +2,8 @@ import Ember from 'ember-metal/core'; // Ember.assert
 import { get as e_get } from 'ember-metal/property_get';
 import {
   guidFor,
-  meta as metaFor
+  meta as metaFor,
+  isArray
 } from 'ember-metal/utils';
 import EmberError from 'ember-metal/error';
 import {
@@ -20,12 +21,11 @@ import {
   ComputedProperty,
   cacheFor
 } from 'ember-metal/computed';
-import { create as o_create } from 'ember-metal/platform';
+import o_create from 'ember-metal/platform/create';
 import { forEach } from 'ember-metal/enumerable_utils';
 import TrackedArray from 'ember-runtime/system/tracked_array';
 import EmberArray from 'ember-runtime/mixins/array';
 import run from 'ember-metal/run_loop';
-import { isArray } from 'ember-metal/utils';
 
 var cacheSet = cacheFor.set;
 var cacheGet = cacheFor.get;
@@ -362,7 +362,7 @@ function normalizeIndex(index, length, newItemsOffset) {
     return Math.max(0, length + index);
   } else if (index < length) {
     return index;
-  } else /* index > length */ {
+  } else { // index > length
     return Math.min(length - newItemsOffset, index);
   }
 }
@@ -419,7 +419,10 @@ function partiallyRecomputeFor(obj, dependentKey) {
 function ReduceComputedPropertyInstanceMeta(context, propertyName, initialValue) {
   this.context = context;
   this.propertyName = propertyName;
-  this.cache = metaFor(context).cache;
+  var contextMeta = metaFor(context);
+  var contextCache = contextMeta.cache;
+  if (!contextCache) { contextCache = contextMeta.cache = {}; }
+  this.cache = contextCache;
   this.dependentArrays = {};
   this.sugarMeta = {};
   this.initialValue = initialValue;
@@ -574,13 +577,19 @@ ReduceComputedProperty.prototype._callbacks = function () {
 };
 
 ReduceComputedProperty.prototype._hasInstanceMeta = function (context, propertyName) {
-  return !!metaFor(context).cacheMeta[propertyName];
+  var contextMeta = context.__ember_meta__;
+  var cacheMeta = contextMeta && contextMeta.cacheMeta;
+  return !!(cacheMeta && cacheMeta[propertyName]);
 };
 
 ReduceComputedProperty.prototype._instanceMeta = function (context, propertyName) {
-  var cacheMeta = metaFor(context).cacheMeta;
-  var meta = cacheMeta[propertyName];
+  var contextMeta = context.__ember_meta__;
+  var cacheMeta = contextMeta.cacheMeta;
+  var meta = cacheMeta && cacheMeta[propertyName];
 
+  if (!cacheMeta) {
+    cacheMeta = contextMeta.cacheMeta = {};
+  }
   if (!meta) {
     meta = cacheMeta[propertyName] = new ReduceComputedPropertyInstanceMeta(context, propertyName, this.initialValue());
     meta.dependentArraysObserver = new DependentArraysObserver(this._callbacks(), this, meta, context, propertyName, meta.sugarMeta);

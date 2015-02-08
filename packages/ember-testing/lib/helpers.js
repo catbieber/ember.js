@@ -38,7 +38,7 @@ function pauseTest() {
 }
 
 function focus(el) {
-  if (el && el.is(':input')) {
+  if (el && el.is(':input, [contenteditable=true]')) {
     var type = el.prop('type');
     if (type !== 'checkbox' && type !== 'radio' && type !== 'hidden') {
       run(el, function() {
@@ -64,7 +64,7 @@ function visit(app, url) {
     run(app, 'advanceReadiness');
     delete router['initialURL'];
   } else {
-    run(app, app.handleURL, url);
+    run(app.__deprecatedInstance__, 'handleURL', url);
   }
 
   return app.testHelpers.wait();
@@ -89,9 +89,9 @@ function check(app, selector, context) {
   Ember.assert('To check \'' + selector +
       '\', the input must be a checkbox', type === 'checkbox');
 
-  run(function() {
-    $el.prop('checked', true).change();
-  });
+  if (!$el.prop('checked')) {
+    app.testHelpers.click(selector, context);
+  }
 
   return app.testHelpers.wait();
 }
@@ -103,9 +103,9 @@ function uncheck(app, selector, context) {
   Ember.assert('To uncheck \'' + selector +
       '\', the input must be a checkbox', type === 'checkbox');
 
-  run(function() {
-    $el.prop('checked', false).change();
-  });
+  if ($el.prop('checked')) {
+    app.testHelpers.click(selector, context);
+  }
 
   return app.testHelpers.wait();
 }
@@ -207,8 +207,10 @@ function wait(app, value) {
 
     // Every 10ms, poll for the async thing to have finished
     var watcher = setInterval(function() {
+      var router = app.__container__.lookup('router:main');
+
       // 1. If the router is loading, keep polling
-      var routerIsLoading = !!app.__container__.lookup('router:main').router.activeTransition;
+      var routerIsLoading = router.router && !!router.router.activeTransition;
       if (routerIsLoading) { return; }
 
       // 2. If there are pending Ajax requests, keep polling
@@ -482,6 +484,7 @@ helper('currentURL', currentURL);
  click('.btn');
  ```
 
+ @since 1.9.0
  @method pauseTest
  @return {Object} A promise that will never resolve
  */

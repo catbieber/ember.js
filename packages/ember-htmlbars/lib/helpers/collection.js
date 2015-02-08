@@ -13,7 +13,6 @@ import { map } from 'ember-metal/enumerable_utils';
 import {
   streamifyClassNameBinding
 } from "ember-views/streams/class_name_binding";
-import { Binding } from 'ember-metal/binding';
 import mergeViewBindings from "ember-htmlbars/system/merge-view-bindings";
 
 /**
@@ -43,7 +42,7 @@ import mergeViewBindings from "ember-htmlbars/system/merge-view-bindings";
   ```javascript
   App = Ember.Application.create();
   App.ApplicationRoute = Ember.Route.extend({
-    model: function(){
+    model: function() {
       return [{name: 'Yehuda'},{name: 'Tom'},{name: 'Peter'}];
     }
   });
@@ -76,7 +75,7 @@ import mergeViewBindings from "ember-htmlbars/system/merge-view-bindings";
   ```javascript
   App = Ember.Application.create();
   App.ApplicationRoute = Ember.Route.extend({
-    model: function(){
+    model: function() {
       return [{name: 'Yehuda'},{name: 'Tom'},{name: 'Peter'}];
     }
   });
@@ -228,12 +227,6 @@ export function collectionHelper(params, hash, options, env) {
     emptyViewClass = readViewFactory(hash.emptyViewClass, container);
   }
   if (emptyViewClass) { hash.emptyView = emptyViewClass; }
-
-  if (hash.keyword) {
-    itemHash._contextBinding = Binding.oneWay('_parentView.context');
-  } else {
-    itemHash._contextBinding = Binding.oneWay('content');
-  }
 
   var viewOptions = mergeViewBindings(this, {}, itemHash);
 

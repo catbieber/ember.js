@@ -1,18 +1,40 @@
 import Ember from 'ember-metal/core';
 import { testBoth } from 'ember-metal/tests/props_helper';
-import { create } from 'ember-metal/platform';
+import create from 'ember-metal/platform/create';
 import {
   ComputedProperty,
   computed,
   cacheFor
 } from "ember-metal/computed";
+
+import {
+  empty,
+  notEmpty,
+  not,
+  bool,
+  match,
+  equal as computedEqual,
+  gt,
+  gte,
+  lt,
+  lte,
+  oneWay,
+  readOnly,
+  defaultTo,
+  deprecatingAlias,
+  and,
+  or,
+  any,
+  collect
+} from "ember-metal/computed_macros";
+import alias from 'ember-metal/alias';
+
 import {
   Descriptor,
   defineProperty
 } from "ember-metal/properties";
 import { get } from 'ember-metal/property_get';
 import { set } from 'ember-metal/property_set';
-import { meta } from 'ember-metal/utils';
 import { isWatching } from "ember-metal/watching";
 import {
   addObserver,
@@ -25,11 +47,11 @@ var obj, count, Global, lookup;
 
 QUnit.module('computed');
 
-test('computed property should be an instance of descriptor', function() {
+QUnit.test('computed property should be an instance of descriptor', function() {
   ok(computed(function() {}) instanceof Descriptor);
 });
 
-test('defining computed property should invoke property on get', function() {
+QUnit.test('defining computed property should invoke property on get', function() {
 
   var obj = {};
   var count = 0;
@@ -42,7 +64,7 @@ test('defining computed property should invoke property on get', function() {
   equal(count, 1, 'should have invoked computed property');
 });
 
-test('defining computed property should invoke property on set', function() {
+QUnit.test('defining computed property should invoke property on set', function() {
 
   var obj = {};
   var count = 0;
@@ -176,14 +198,14 @@ testBoth('using get() and set()', function(get, set) {
 
 QUnit.module('computed - metadata');
 
-test("can set metadata on a computed property", function() {
+QUnit.test("can set metadata on a computed property", function() {
   var computedProperty = computed(function() { });
   computedProperty.meta({ key: 'keyValue' });
 
   equal(computedProperty.meta().key, 'keyValue', "saves passed meta hash to the _meta property");
 });
 
-test("meta should return an empty hash if no meta is set", function() {
+QUnit.test("meta should return an empty hash if no meta is set", function() {
   var computedProperty = computed(function() { });
   deepEqual(computedProperty.meta(), {}, "returned value is an empty hash");
 });
@@ -222,27 +244,27 @@ testBoth('modifying a cacheable property should update cache', function(get, set
   equal(count, 2, 'should not invoke again');
 });
 
-test('calling cacheable() on a computed property raises a deprecation', function() {
+QUnit.test('calling cacheable() on a computed property raises a deprecation', function() {
   var cp = new ComputedProperty(function() {});
   expectDeprecation(function() {
     cp.cacheable();
   }, 'ComputedProperty.cacheable() is deprecated. All computed properties are cacheable by default.');
 });
 
-test('passing cacheable in a the options to the CP constructor raises a deprecation', function() {
+QUnit.test('passing cacheable in a the options to the CP constructor raises a deprecation', function() {
   expectDeprecation(function() {
     new ComputedProperty(function() {}, { cacheable: true });
   }, "Passing opts.cacheable to the CP constructor is deprecated. Invoke `volatile()` on the CP instead.");
 });
 
-test('calling readOnly() on a computed property with arguments raises a deprecation', function() {
+QUnit.test('calling readOnly() on a computed property with arguments raises a deprecation', function() {
   var cp = new ComputedProperty(function() {});
   expectDeprecation(function() {
     cp.readOnly(true);
   }, 'Passing arguments to ComputedProperty.readOnly() is deprecated.');
 });
 
-test('passing readOnly in a the options to the CP constructor raises a deprecation', function() {
+QUnit.test('passing readOnly in a the options to the CP constructor raises a deprecation', function() {
   expectDeprecation(function() {
     new ComputedProperty(function() {}, { readOnly: false });
   }, "Passing opts.readOnly to the CP constructor is deprecated. All CPs are writable by default. Yo can invoke `readOnly()` on the CP to change this.");
@@ -528,7 +550,7 @@ testBoth('depending on simple chain', function(get, set) {
   equal(get(obj, 'prop'), 'BUZZ 2');
   equal(get(obj, 'prop'), 'BUZZ 2');
 
-  set(get(obj, 'foo.bar'),  'baz', { biff: 'BLOB' });
+  set(get(obj, 'foo.bar'), 'baz', { biff: 'BLOB' });
   equal(get(obj, 'prop'), 'BLOB 3');
   equal(get(obj, 'prop'), 'BLOB 3');
 
@@ -623,7 +645,7 @@ testBoth('chained dependent keys should evaluate computed properties lazily', fu
 if (Ember.FEATURES.isEnabled("new-computed-syntax")) {
   QUnit.module('computed - improved cp syntax');
 
-  test('setter and getters are passed using an object', function() {
+  QUnit.test('setter and getters are passed using an object', function() {
     var testObj = Ember.Object.extend({
       a: '1',
       b: '2',
@@ -648,7 +670,7 @@ if (Ember.FEATURES.isEnabled("new-computed-syntax")) {
     ok(testObj.get('aInt') === 123, 'cp has been updated too');
   });
 
-  test('setter can be omited', function() {
+  QUnit.test('setter can be omited', function() {
     var testObj = Ember.Object.extend({
       a: '1',
       b: '2',
@@ -665,6 +687,24 @@ if (Ember.FEATURES.isEnabled("new-computed-syntax")) {
     testObj.set('aInt', '123');
     ok(testObj.get('aInt') === '123', 'cp has been updated too');
   });
+
+  QUnit.test('the return value of the setter gets cached', function() {
+    var testObj = Ember.Object.extend({
+      a: '1',
+      sampleCP: computed('a', {
+        get: function(keyName) {
+          ok(false, "The getter should not be invoked");
+          return 'get-value';
+        },
+        set: function(keyName, value, oldValue) {
+          return 'set-value';
+        }
+      })
+    }).create();
+
+    testObj.set('sampleCP', 'abcd');
+    ok(testObj.get('sampleCP') === 'set-value', 'The return value of the CP was cached');
+  });
 }
 
 // ..........................................................
@@ -673,7 +713,7 @@ if (Ember.FEATURES.isEnabled("new-computed-syntax")) {
 
 QUnit.module('computed edge cases');
 
-test('adding a computed property should show up in key iteration', function() {
+QUnit.test('adding a computed property should show up in key iteration', function() {
 
   var obj = {};
   defineProperty(obj, 'foo', computed(function() {}));
@@ -820,13 +860,13 @@ testBoth("when setting a value on a computed property that doesn't handle sets",
   set(obj, 'foo', 'bar');
 
   equal(get(obj, 'foo'), 'bar', 'The set value is properly returned');
-  ok(!meta(obj).descs.foo, 'The computed property was removed');
+  ok(typeof obj.foo === 'string', 'The computed property was removed');
   ok(observerFired, 'The observer was still notified');
 });
 
 QUnit.module('computed - readOnly');
 
-test('is chainable', function() {
+QUnit.test('is chainable', function() {
   var cp = computed(function() {}).readOnly();
 
   ok(cp instanceof Descriptor);
@@ -842,7 +882,7 @@ testBoth('protects against setting', function(get, set) {
 
   equal(get(obj, 'bar'), 'barValue');
 
-  raises(function() {
+  throws(function() {
     set(obj, 'bar', 'newBar');
   }, /Cannot set read\-only property "bar" on object:/ );
 
@@ -853,20 +893,20 @@ QUnit.module('CP macros');
 
 testBoth('computed.not', function(get, set) {
   var obj = { foo: true };
-  defineProperty(obj, 'notFoo', computed.not('foo'));
+  defineProperty(obj, 'notFoo', not('foo'));
   equal(get(obj, 'notFoo'), false);
 
   obj = { foo: { bar: true } };
-  defineProperty(obj, 'notFoo', computed.not('foo.bar'));
+  defineProperty(obj, 'notFoo', not('foo.bar'));
   equal(get(obj, 'notFoo'), false);
 });
 
 testBoth('computed.empty', function(get, set) {
   var obj = { foo: [], bar: undefined, baz: null, quz: '' };
-  defineProperty(obj, 'fooEmpty', computed.empty('foo'));
-  defineProperty(obj, 'barEmpty', computed.empty('bar'));
-  defineProperty(obj, 'bazEmpty', computed.empty('baz'));
-  defineProperty(obj, 'quzEmpty', computed.empty('quz'));
+  defineProperty(obj, 'fooEmpty', empty('foo'));
+  defineProperty(obj, 'barEmpty', empty('bar'));
+  defineProperty(obj, 'bazEmpty', empty('baz'));
+  defineProperty(obj, 'quzEmpty', empty('quz'));
 
   equal(get(obj, 'fooEmpty'), true);
   set(obj, 'foo', [1]);
@@ -880,10 +920,10 @@ testBoth('computed.empty', function(get, set) {
 
 testBoth('computed.bool', function(get, set) {
   var obj = { foo: function() {}, bar: 'asdf', baz: null, quz: false };
-  defineProperty(obj, 'fooBool', computed.bool('foo'));
-  defineProperty(obj, 'barBool', computed.bool('bar'));
-  defineProperty(obj, 'bazBool', computed.bool('baz'));
-  defineProperty(obj, 'quzBool', computed.bool('quz'));
+  defineProperty(obj, 'fooBool', bool('foo'));
+  defineProperty(obj, 'barBool', bool('bar'));
+  defineProperty(obj, 'bazBool', bool('baz'));
+  defineProperty(obj, 'quzBool', bool('quz'));
   equal(get(obj, 'fooBool'), true);
   equal(get(obj, 'barBool'), true);
   equal(get(obj, 'bazBool'), false);
@@ -896,10 +936,10 @@ testBoth('computed.alias', function(get, set) {
     return 'apple';
   }));
 
-  defineProperty(obj, 'barAlias', computed.alias('bar'));
-  defineProperty(obj, 'bazAlias', computed.alias('baz'));
-  defineProperty(obj, 'quzAlias', computed.alias('quz'));
-  defineProperty(obj, 'bayAlias', computed.alias('bay'));
+  defineProperty(obj, 'barAlias', alias('bar'));
+  defineProperty(obj, 'bazAlias', alias('baz'));
+  defineProperty(obj, 'quzAlias', alias('quz'));
+  defineProperty(obj, 'bayAlias', alias('bay'));
 
   equal(get(obj, 'barAlias'), 'asdf');
   equal(get(obj, 'bazAlias'), null);
@@ -926,7 +966,7 @@ testBoth('computed.alias set', function(get, set) {
   defineProperty(obj, 'original', computed(function(key, value) {
     return constantValue;
   }));
-  defineProperty(obj, 'aliased', computed.alias('original'));
+  defineProperty(obj, 'aliased', alias('original'));
 
   equal(get(obj, 'original'), constantValue);
   equal(get(obj, 'aliased'), constantValue);
@@ -941,7 +981,7 @@ testBoth('computed.defaultTo', function(get, set) {
   expect(6);
 
   var obj = { source: 'original source value' };
-  defineProperty(obj, 'copy', computed.defaultTo('source'));
+  defineProperty(obj, 'copy', defaultTo('source'));
 
   ignoreDeprecation(function() {
     equal(get(obj, 'copy'), 'original source value');
@@ -959,7 +999,7 @@ testBoth('computed.defaultTo', function(get, set) {
 
   expectDeprecation(function() {
     var obj = { source: 'original source value' };
-    defineProperty(obj, 'copy', computed.defaultTo('source'));
+    defineProperty(obj, 'copy', defaultTo('source'));
 
     get(obj, 'copy');
   }, 'Usage of Ember.computed.defaultTo is deprecated, use `Ember.computed.oneWay` instead.');
@@ -967,7 +1007,7 @@ testBoth('computed.defaultTo', function(get, set) {
 
 testBoth('computed.match', function(get, set) {
   var obj = { name: 'Paul' };
-  defineProperty(obj, 'isPaul', computed.match('name', /Paul/));
+  defineProperty(obj, 'isPaul', match('name', /Paul/));
 
   equal(get(obj, 'isPaul'), true, 'is Paul');
 
@@ -978,7 +1018,7 @@ testBoth('computed.match', function(get, set) {
 
 testBoth('computed.notEmpty', function(get, set) {
   var obj = { items: [1] };
-  defineProperty(obj, 'hasItems', computed.notEmpty('items'));
+  defineProperty(obj, 'hasItems', notEmpty('items'));
 
   equal(get(obj, 'hasItems'), true, 'is not empty');
 
@@ -989,7 +1029,7 @@ testBoth('computed.notEmpty', function(get, set) {
 
 testBoth('computed.equal', function(get, set) {
   var obj = { name: 'Paul' };
-  defineProperty(obj, 'isPaul', computed.equal('name', 'Paul'));
+  defineProperty(obj, 'isPaul', computedEqual('name', 'Paul'));
 
   equal(get(obj, 'isPaul'), true, 'is Paul');
 
@@ -1000,7 +1040,7 @@ testBoth('computed.equal', function(get, set) {
 
 testBoth('computed.gt', function(get, set) {
   var obj = { number: 2 };
-  defineProperty(obj, 'isGreaterThenOne', computed.gt('number', 1));
+  defineProperty(obj, 'isGreaterThenOne', gt('number', 1));
 
   equal(get(obj, 'isGreaterThenOne'), true, 'is gt');
 
@@ -1015,7 +1055,7 @@ testBoth('computed.gt', function(get, set) {
 
 testBoth('computed.gte', function(get, set) {
   var obj = { number: 2 };
-  defineProperty(obj, 'isGreaterOrEqualThenOne', computed.gte('number', 1));
+  defineProperty(obj, 'isGreaterOrEqualThenOne', gte('number', 1));
 
   equal(get(obj, 'isGreaterOrEqualThenOne'), true, 'is gte');
 
@@ -1030,7 +1070,7 @@ testBoth('computed.gte', function(get, set) {
 
 testBoth('computed.lt', function(get, set) {
   var obj = { number: 0 };
-  defineProperty(obj, 'isLesserThenOne', computed.lt('number', 1));
+  defineProperty(obj, 'isLesserThenOne', lt('number', 1));
 
   equal(get(obj, 'isLesserThenOne'), true, 'is lt');
 
@@ -1045,7 +1085,7 @@ testBoth('computed.lt', function(get, set) {
 
 testBoth('computed.lte', function(get, set) {
   var obj = { number: 0 };
-  defineProperty(obj, 'isLesserOrEqualThenOne', computed.lte('number', 1));
+  defineProperty(obj, 'isLesserOrEqualThenOne', lte('number', 1));
 
   equal(get(obj, 'isLesserOrEqualThenOne'), true, 'is lte');
 
@@ -1060,18 +1100,23 @@ testBoth('computed.lte', function(get, set) {
 
 testBoth('computed.and', function(get, set) {
   var obj = { one: true, two: true };
-  defineProperty(obj, 'oneAndTwo', computed.and('one', 'two'));
+  defineProperty(obj, 'oneAndTwo', and('one', 'two'));
 
   equal(get(obj, 'oneAndTwo'), true, 'one and two');
 
   set(obj, 'one', false);
 
   equal(get(obj, 'oneAndTwo'), false, 'one and not two');
+
+  set(obj, 'one', true);
+  set(obj, 'two', 2);
+
+  equal(get(obj, 'oneAndTwo'), 2, 'returns truthy value as in &&');
 });
 
 testBoth('computed.or', function(get, set) {
   var obj = { one: true, two: true };
-  defineProperty(obj, 'oneOrTwo', computed.or('one', 'two'));
+  defineProperty(obj, 'oneOrTwo', or('one', 'two'));
 
   equal(get(obj, 'oneOrTwo'), true, 'one or two');
 
@@ -1083,14 +1128,18 @@ testBoth('computed.or', function(get, set) {
 
   equal(get(obj, 'oneOrTwo'), false, 'nore one nore two');
 
-  set(obj, 'one', true);
+  set(obj, 'two', true);
 
   equal(get(obj, 'oneOrTwo'), true, 'one or two');
+
+  set(obj, 'one', 1);
+
+  equal(get(obj, 'oneOrTwo'), 1, 'returns truthy value as in ||');
 });
 
 testBoth('computed.any', function(get, set) {
   var obj = { one: 'foo', two: 'bar' };
-  defineProperty(obj, 'anyOf', computed.any('one', 'two'));
+  defineProperty(obj, 'anyOf', any('one', 'two'));
 
   equal(get(obj, 'anyOf'), 'foo', 'is foo');
 
@@ -1101,7 +1150,7 @@ testBoth('computed.any', function(get, set) {
 
 testBoth('computed.collect', function(get, set) {
   var obj = { one: 'foo', two: 'bar', three: null };
-  defineProperty(obj, 'all', computed.collect('one', 'two', 'three', 'four'));
+  defineProperty(obj, 'all', collect('one', 'two', 'three', 'four'));
 
   deepEqual(get(obj, 'all'), ['foo', 'bar', null, null], 'have all of them');
 
@@ -1116,34 +1165,29 @@ testBoth('computed.collect', function(get, set) {
   deepEqual(get(obj, 'all'), [0, 'bar', a, true], 'have all of them');
 });
 
-function oneWayTest(methodName) {
-  return function(get, set) {
-    var obj = {
-      firstName: 'Teddy',
-      lastName: 'Zeenny'
-    };
-
-    defineProperty(obj, 'nickName', computed[methodName]('firstName'));
-
-    equal(get(obj, 'firstName'), 'Teddy');
-    equal(get(obj, 'lastName'), 'Zeenny');
-    equal(get(obj, 'nickName'), 'Teddy');
-
-    set(obj, 'nickName', 'TeddyBear');
-
-    equal(get(obj, 'firstName'), 'Teddy');
-    equal(get(obj, 'lastName'), 'Zeenny');
-
-    equal(get(obj, 'nickName'), 'TeddyBear');
-
-    set(obj, 'firstName', 'TEDDDDDDDDYYY');
-
-    equal(get(obj, 'nickName'), 'TeddyBear');
+testBoth('computed.oneWay', function(get, set) {
+  var obj = {
+    firstName: 'Teddy',
+    lastName: 'Zeenny'
   };
-}
 
-testBoth('computed.oneWay', oneWayTest('oneWay'));
-testBoth('computed.reads', oneWayTest('reads'));
+  defineProperty(obj, 'nickName', oneWay('firstName'));
+
+  equal(get(obj, 'firstName'), 'Teddy');
+  equal(get(obj, 'lastName'), 'Zeenny');
+  equal(get(obj, 'nickName'), 'Teddy');
+
+  set(obj, 'nickName', 'TeddyBear');
+
+  equal(get(obj, 'firstName'), 'Teddy');
+  equal(get(obj, 'lastName'), 'Zeenny');
+
+  equal(get(obj, 'nickName'), 'TeddyBear');
+
+  set(obj, 'firstName', 'TEDDDDDDDDYYY');
+
+  equal(get(obj, 'nickName'), 'TeddyBear');
+});
 
 testBoth('computed.readOnly', function(get, set) {
   var obj = {
@@ -1151,7 +1195,7 @@ testBoth('computed.readOnly', function(get, set) {
     lastName: 'Zeenny'
   };
 
-  defineProperty(obj, 'nickName', computed.readOnly('firstName'));
+  defineProperty(obj, 'nickName', readOnly('firstName'));
 
   equal(get(obj, 'firstName'), 'Teddy');
   equal(get(obj, 'lastName'), 'Zeenny');
@@ -1177,10 +1221,10 @@ testBoth('computed.deprecatingAlias', function(get, set) {
     return 'apple';
   }));
 
-  defineProperty(obj, 'barAlias', computed.deprecatingAlias('bar'));
-  defineProperty(obj, 'bazAlias', computed.deprecatingAlias('baz'));
-  defineProperty(obj, 'quzAlias', computed.deprecatingAlias('quz'));
-  defineProperty(obj, 'bayAlias', computed.deprecatingAlias('bay'));
+  defineProperty(obj, 'barAlias', deprecatingAlias('bar'));
+  defineProperty(obj, 'bazAlias', deprecatingAlias('baz'));
+  defineProperty(obj, 'quzAlias', deprecatingAlias('quz'));
+  defineProperty(obj, 'bayAlias', deprecatingAlias('bay'));
 
   expectDeprecation(function() {
     equal(get(obj, 'barAlias'), 'asdf');

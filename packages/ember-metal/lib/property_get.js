@@ -9,7 +9,7 @@ import {
   isPath,
   hasThis as pathHasThis
 } from "ember-metal/path_cache";
-import { hasPropertyAccessors } from "ember-metal/platform";
+import { hasPropertyAccessors } from "ember-metal/platform/define_property";
 
 var FIRST_KEY = /^([^\.]+)/;
 
@@ -44,7 +44,7 @@ var FIRST_KEY = /^([^\.]+)/;
   @param {String} keyName The property key to retrieve
   @return {Object} the property value or `null`.
 */
-var get = function get(obj, keyName) {
+export function get(obj, keyName) {
   // Helpers that operate with 'this' within an #each
   if (keyName === '') {
     return obj;
@@ -68,7 +68,8 @@ var get = function get(obj, keyName) {
   }
 
   var meta = obj['__ember_meta__'];
-  var desc = meta && meta.descs[keyName];
+  var possibleDesc = obj[keyName];
+  var desc = (possibleDesc !== null && typeof possibleDesc === 'object' && possibleDesc.isDescriptor) ? possibleDesc : undefined;
   var ret;
 
   if (desc === undefined && isPath(keyName)) {
@@ -95,7 +96,7 @@ var get = function get(obj, keyName) {
 
     return ret;
   }
-};
+}
 
 /**
   Normalizes a target/path pair to reflect that actual target/path that should
@@ -110,7 +111,7 @@ var get = function get(obj, keyName) {
   @param {String} path A path on the target or a global property path.
   @return {Array} a temporary array with the normalized target/path pair.
 */
-function normalizeTuple(target, path) {
+export function normalizeTuple(target, path) {
   var hasThis  = pathHasThis(path);
   var isGlobal = !hasThis && isGlobalPath(path);
   var key;
@@ -142,7 +143,7 @@ function normalizeTuple(target, path) {
   return [target, path];
 }
 
-function _getPath(root, path) {
+export function _getPath(root, path) {
   var hasThis, parts, tuple, idx, len;
 
   // If there is no root and path is a key name, return that
@@ -179,8 +180,3 @@ export function getWithDefault(root, key, defaultValue) {
 }
 
 export default get;
-export {
-  get,
-  normalizeTuple,
-  _getPath
-};

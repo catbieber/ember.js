@@ -108,9 +108,7 @@ forEach(NativeArray.keys(), function(methodName) {
   }
 });
 
-if (ignore.length > 0) {
-  NativeArray = NativeArray.without.apply(NativeArray, ignore);
-}
+NativeArray = NativeArray.without.apply(NativeArray, ignore);
 
 /**
   Creates an `Ember.NativeArray` from an Array like object.
@@ -128,7 +126,7 @@ if (ignore.length > 0) {
     classNames: ['pagination'],
 
     init: function() {
-      this._super();
+      this._super.apply(this, arguments);
       if (!this.get('content')) {
         this.set('content', Ember.A());
       }

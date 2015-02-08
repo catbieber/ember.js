@@ -8,10 +8,11 @@ import { read, chain, subscribe, unsubscribe } from "ember-metal/streams/utils";
 import { readComponentFactory } from "ember-views/streams/utils";
 import mergeViewBindings from "ember-htmlbars/system/merge-view-bindings";
 import EmberError from "ember-metal/error";
+import ContainerView from "ember-views/views/container_view";
 
-export default Ember.ContainerView.extend(_Metamorph, {
+export default ContainerView.extend(_Metamorph, {
   init: function() {
-    this._super();
+    this._super.apply(this, arguments);
     var componentNameStream = this._boundComponentOptions.componentNameStream;
     var container = this.container;
     this.componentClassStream = chain(componentNameStream, function() {
@@ -23,7 +24,7 @@ export default Ember.ContainerView.extend(_Metamorph, {
   },
   willDestroy: function() {
     unsubscribe(this.componentClassStream, this._updateBoundChildComponent, this);
-    this._super();
+    this._super.apply(this, arguments);
   },
   _updateBoundChildComponent: function() {
     this.replace(0, 1, [this._createNewComponent()]);
@@ -34,12 +35,11 @@ export default Ember.ContainerView.extend(_Metamorph, {
       throw new EmberError('HTMLBars error: Could not find component named "' + read(this._boundComponentOptions.componentNameStream) + '".');
     }
     var hash    = this._boundComponentOptions;
-    var ignore  = ["_boundComponentOptions", "componentClassStream"];
     var hashForComponent = {};
 
     var prop;
     for (prop in hash) {
-      if (ignore.indexOf(prop) !== -1) { continue; }
+      if (prop === '_boundComponentOptions' || prop === 'componentClassStream') { continue; }
       hashForComponent[prop] = hash[prop];
     }
 

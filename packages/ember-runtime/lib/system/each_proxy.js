@@ -6,7 +6,10 @@
 import Ember from "ember-metal/core"; // Ember.assert
 
 import { get } from "ember-metal/property_get";
-import { guidFor } from "ember-metal/utils";
+import {
+  guidFor,
+  typeOf
+} from "ember-metal/utils";
 import { forEach } from "ember-metal/enumerable_utils";
 import { indexOf } from "ember-metal/array";
 import EmberArray from "ember-runtime/mixins/array"; // ES6TODO: WAT? Circular dep?
@@ -18,7 +21,6 @@ import {
   removeBeforeObserver,
   removeObserver
 } from "ember-metal/observer";
-import { typeOf } from "ember-metal/utils";
 import { watchedEvents } from "ember-metal/events";
 import { defineProperty } from "ember-metal/properties";
 import {
@@ -32,7 +34,7 @@ import {
 var EachArray = EmberObject.extend(EmberArray, {
 
   init: function(content, keyName, owner) {
-    this._super();
+    this._super.apply(this, arguments);
     this._keyName = keyName;
     this._owner   = owner;
     this._content = content;
@@ -112,7 +114,7 @@ function removeObserverForContentKey(content, keyName, proxy, idx, loc) {
 var EachProxy = EmberObject.extend({
 
   init: function(content) {
-    this._super();
+    this._super.apply(this, arguments);
     this._content = content;
     content.addArrayObserver(this);
 
