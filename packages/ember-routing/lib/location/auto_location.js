@@ -5,6 +5,7 @@ import EmberLocation from "ember-routing/location/api";
 import HistoryLocation from "ember-routing/location/history_location";
 import HashLocation from "ember-routing/location/hash_location";
 import NoneLocation from "ember-routing/location/none_location";
+import jQuery from "ember-views/system/jquery";
 
 import environment from "ember-metal/environment";
 import { supportsHashChange, supportsHistory } from "ember-routing/location/feature_detect";
@@ -72,6 +73,17 @@ export default {
     @default '/'
   */
   rootURL: '/',
+
+  /**
+    @private
+
+    Will be pre-pended to path upon state change.
+
+    @since 1.11
+    @property baseURL
+    @default '/'
+  */
+  baseURL: jQuery('base').attr('href') || '',
 
   /**
     @private
@@ -171,6 +183,15 @@ export default {
   },
 
   /**
+    @since 1.11
+    @private
+    @method _getBaseURL
+  */
+  _getBaseURL: function() {
+    return this.baseURL;
+  },
+
+  /**
     @private
 
     Returns the current `location.pathname`, normalized for IE inconsistencies.
@@ -230,14 +251,10 @@ export default {
     @method _getHistoryPath
   */
   _getHistoryPath: function () {
-    var rootURL = this._getRootURL();
     var path = this._getPath();
     var hash = this._getHash();
     var query = this._getQuery();
-    var rootURLIndex = path.indexOf(rootURL);
     var routeHash, hashParts;
-
-    Ember.assert('Path ' + path + ' does not start with the provided rootURL ' + rootURL, rootURLIndex === 0);
 
     // By convention, Ember.js routes using HashLocation are required to start
     // with `#/`. Anything else should NOT be considered a route and should
@@ -279,9 +296,13 @@ export default {
   */
   _getHashPath: function () {
     var rootURL = this._getRootURL();
-    var path = rootURL;
+    var baseURL = this._getBaseURL();
+    rootURL = rootURL.replace(/\/$/, '');
+    baseURL = baseURL.replace(/\/$/, '');
+
+    var path = baseURL + rootURL + '/';
     var historyPath = this._getHistoryPath();
-    var routePath = historyPath.substr(rootURL.length);
+    var routePath = historyPath.replace(baseURL, '').replace(rootURL, '');
 
     if (routePath !== '') {
       if (routePath.charAt(0) !== '/') {
