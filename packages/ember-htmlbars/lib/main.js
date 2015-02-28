@@ -11,8 +11,7 @@ import makeViewHelper from "ember-htmlbars/system/make-view-helper";
 import makeBoundHelper from "ember-htmlbars/system/make_bound_helper";
 
 import {
-  registerHelper,
-  default as helpers
+  registerHelper
 } from "ember-htmlbars/helpers";
 import { viewHelper } from "ember-htmlbars/helpers/view";
 import { componentHelper } from "ember-htmlbars/helpers/component";
@@ -66,15 +65,12 @@ registerHelper('collection', collectionHelper);
 registerHelper('each', eachHelper);
 registerHelper('unbound', unboundHelper);
 
-if (Ember.FEATURES.isEnabled('ember-htmlbars')) {
-  Ember.HTMLBars = {
-    _registerHelper: registerHelper,
-    template: template,
-    compile: compile,
-    precompile: precompile,
-    makeViewHelper: makeViewHelper,
-    makeBoundHelper: makeBoundHelper,
-    registerPlugin: registerPlugin
-  };
-
-}
+Ember.HTMLBars = {
+  _registerHelper: registerHelper,
+  template: template,
+  compile: compile,
+  precompile: precompile,
+  makeViewHelper: makeViewHelper,
+  makeBoundHelper: makeBoundHelper,
+  registerPlugin: registerPlugin
+};

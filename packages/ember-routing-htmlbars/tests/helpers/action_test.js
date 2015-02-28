@@ -6,7 +6,7 @@ import ActionManager from "ember-views/system/action_manager";
 
 import { Registry } from "ember-runtime/system/container";
 import EmberObject from "ember-runtime/system/object";
-import { default as EmberController } from "ember-runtime/controllers/controller";
+import EmberController from "ember-runtime/controllers/controller";
 import EmberArrayController from "ember-runtime/controllers/array_controller";
 
 import compile from "ember-template-compiler/system/compile";
@@ -14,9 +14,9 @@ import EmberView from "ember-views/views/view";
 import EmberComponent from "ember-views/views/component";
 import jQuery from "ember-views/system/jquery";
 
+import helpers from "ember-htmlbars/helpers";
 import {
-  registerHelper,
-  default as helpers
+  registerHelper
 } from "ember-htmlbars/helpers";
 
 import {
@@ -143,8 +143,6 @@ QUnit.test("Inside a yield, the target points at the original target", function(
   equal(watted, true, "The action was called on the right context");
 });
 
-if (!Ember.FEATURES.isEnabled('ember-htmlbars')) {
-// jscs:disable validateIndentation
 QUnit.test("should target the current controller inside an {{each}} loop [DEPRECATED]", function() {
   var registeredTarget;
 
@@ -167,7 +165,7 @@ QUnit.test("should target the current controller inside an {{each}} loop [DEPREC
 
   view = EmberView.create({
     controller: controller,
-    template: compile('{{#each controller}}{{action "editTodo"}}{{/each}}')
+    template: compile('{{#each controller}}<button {{action "editTodo"}}>Edit</button>{{/each}}')
   });
 
   expectDeprecation(function() {
@@ -176,8 +174,6 @@ QUnit.test("should target the current controller inside an {{each}} loop [DEPREC
 
   equal(registeredTarget, itemController, "the item controller is the target of action");
 });
-// jscs:enable validateIndentation
-}
 
 QUnit.test("should target the with-controller inside an {{#with controller='person'}} [DEPRECATED]", function() {
   var registeredTarget;

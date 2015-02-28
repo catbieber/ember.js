@@ -8,9 +8,9 @@ import { set } from "ember-metal/property_set";
 import { A } from "ember-runtime/system/native_array";
 import Component from "ember-views/views/component";
 import EmberError from "ember-metal/error";
+import helpers from "ember-htmlbars/helpers";
 import {
-  registerHelper,
-  default as helpers
+  registerHelper
 } from "ember-htmlbars/helpers";
 import makeViewHelper from "ember-htmlbars/system/make-view-helper";
 
@@ -215,31 +215,6 @@ QUnit.test("can bind a keyword to a component and use it in yield", function() {
   equal(view.$('div p:contains(update) + p:contains(update)').length, 1, "keyword has correctly propagated update");
 });
 
-if (!Ember.FEATURES.isEnabled('ember-htmlbars')) {
-// jscs:disable validateIndentation
-
-QUnit.test("yield uses the layout context for non component [DEPRECATED]", function() {
-  view = EmberView.create({
-    controller: {
-      boundText: "outer",
-      inner: {
-        boundText: "inner"
-      }
-    },
-    layout: compile("<p>{{boundText}}</p>{{#with inner}}<p>{{yield}}</p>{{/with}}"),
-    template: compile('{{boundText}}')
-  });
-
-  expectDeprecation(function() {
-    runAppend(view);
-  }, 'Using the context switching form of `{{with}}` is deprecated. Please use the keyword form (`{{with foo as bar}}`) instead.');
-
-  equal('outerinner', view.$('p').text(), "Yield points at the right context");
-});
-
-// jscs:enable validateIndentation
-}
-
 QUnit.test("yield view should be a virtual view", function() {
   var component = Component.extend({
     isParentComponent: true,
@@ -307,6 +282,34 @@ QUnit.test("yield should work for views even if _parentView is null", function()
 
   equal(view.$().text(), "Layout: View Content");
 
+});
+
+QUnit.test("simple bindings inside of a yielded template should work properly when the yield is nested inside of another view", function() {
+  view = EmberView.create({
+    layout:   compile('{{#if view.falsy}}{{else}}{{yield}}{{/if}}'),
+    template: compile("{{view.text}}"),
+    text: "ohai"
+  });
+
+  run(function() {
+    view.createElement();
+  });
+
+  equal(view.$().text(), "ohai");
+});
+
+QUnit.test("nested simple bindings inside of a yielded template should work properly when the yield is nested inside of another view", function() {
+  view = EmberView.create({
+    layout:   compile('{{#if view.falsy}}{{else}}{{yield}}{{/if}}'),
+    template: compile("{{#if view.falsy}}{{else}}{{view.text}}{{/if}}"),
+    text: "ohai"
+  });
+
+  run(function() {
+    view.createElement();
+  });
+
+  equal(view.$().text(), "ohai");
 });
 
 QUnit.module("ember-htmlbars: Component {{yield}}", {

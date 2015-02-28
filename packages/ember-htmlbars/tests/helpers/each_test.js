@@ -7,7 +7,7 @@ import _MetamorphView from "ember-views/views/metamorph_view";
 import { computed } from "ember-metal/computed";
 import ArrayController from "ember-runtime/controllers/array_controller";
 import { A } from "ember-runtime/system/native_array";
-import { default as EmberController } from "ember-runtime/controllers/controller";
+import EmberController from "ember-runtime/controllers/controller";
 import ObjectController from "ember-runtime/controllers/object_controller";
 import { Registry } from "ember-runtime/system/container";
 
@@ -540,10 +540,7 @@ QUnit.test("it supports {{itemViewClass=}} with global (DEPRECATED)", function()
     people: people
   });
 
-  var deprecation = /Resolved the view "MyView" on the global context/;
-  if (Ember.FEATURES.isEnabled('ember-htmlbars')) {
-    deprecation = /Global lookup of MyView from a Handlebars template is deprecated/;
-  }
+  var deprecation = /Global lookup of MyView from a Handlebars template is deprecated/;
 
   expectDeprecation(function() {
     runAppend(view);
@@ -659,11 +656,7 @@ QUnit.test("it supports {{emptyViewClass=}} with global (DEPRECATED)", function(
     people: A()
   });
 
-  var deprecation = /Resolved the view "MyEmptyView" on the global context/;
-
-  if (Ember.FEATURES.isEnabled('ember-htmlbars')) {
-    deprecation = /Global lookup of MyEmptyView from a Handlebars template is deprecated/;
-  }
+  var deprecation = /Global lookup of MyEmptyView from a Handlebars template is deprecated/;
 
   expectDeprecation(function() {
     runAppend(view);
@@ -1068,7 +1061,4 @@ function testEachWithItem(moduleName, useBlockParams) {
 }
 
 testEachWithItem("{{#each foo in bar}}", false);
-
-if (Ember.FEATURES.isEnabled('ember-htmlbars-block-params')) {
-  testEachWithItem("{{#each bar as |foo|}}", true);
-}
+testEachWithItem("{{#each bar as |foo|}}", true);

@@ -114,7 +114,7 @@ import 'ember-htmlbars';
 
   ```handlebars
   {{#link-to 'photoGallery.recent'}}
-    Great Hamster Photos from the last week
+    Great Hamster Photos
   {{/link-to}}
   ```
 
@@ -132,7 +132,7 @@ import 'ember-htmlbars';
 
   ```handlebars
   {{#link-to 'photoGallery.recent' activeClass="current-url"}}
-    Great Hamster Photos from the last week
+    Great Hamster Photos
   {{/link-to}}
   ```
 
@@ -302,7 +302,7 @@ function linkToHelper(params, hash, options, env) {
 
   if (!options.template) {
     var linkTitle = params.shift();
-    var shouldEscape = options.morph.escaped;
+    var parseTextAsHTML = options.morph.parseTextAsHTML;
 
     if (isStream(linkTitle)) {
       hash.linkTitle = { stream: linkTitle };
@@ -310,12 +310,13 @@ function linkToHelper(params, hash, options, env) {
 
     options.template = {
       isHTMLBars: true,
+      revision: 'Ember@VERSION_STRING_PLACEHOLDER',
       render: function(view, env) {
         var value = read(linkTitle) || "";
-        if (shouldEscape) {
-          return env.dom.createTextNode(value);
-        } else {
+        if (parseTextAsHTML) {
           return value;
+        } else {
+          return env.dom.createTextNode(value);
         }
       }
     };

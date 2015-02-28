@@ -81,7 +81,7 @@ var EmberRouter = EmberObject.extend(Evented, {
     });
 
     function generateDSL() {
-      this.resource('application', { path: "/" }, function() {
+      this.resource('application', { path: "/", overrideNameAssertion: true }, function() {
         for (var i=0; i < dslCallbacks.length; i++) {
           dslCallbacks[i].call(this);
         }
@@ -186,6 +186,38 @@ var EmberRouter = EmberObject.extend(Evented, {
     if (get(this, 'namespace').LOG_TRANSITIONS) {
       Ember.Logger.log("Transitioned into '" + EmberRouter._routePath(infos) + "'");
     }
+  },
+
+  _setOutlets: function() {
+    var handlerInfos = this.router.currentHandlerInfos;
+    var route;
+    var defaultParentState;
+    var liveRoutes = null;
+
+    if (!handlerInfos) {
+      return;
+    }
+
+    for (var i = 0; i < handlerInfos.length; i++) {
+      route = handlerInfos[i].handler;
+      var connections = normalizedConnections(route);
+      var ownState;
+      for (var j = 0; j < connections.length; j++) {
+        var appended = appendLiveRoute(liveRoutes, defaultParentState, connections[j]);
+        liveRoutes = appended.liveRoutes;
+        if (appended.ownState.render.name === route.routeName) {
+          ownState = appended.ownState;
+        }
+      }
+      defaultParentState = ownState;
+    }
+    if (!this._toplevelView) {
+      var OutletView = this.container.lookupFactory('view:-outlet');
+      this._toplevelView = OutletView.create({ _isTopLevel: true });
+      var instance = this.container.lookup('-application-instance:main');
+      instance.didCreateRootView(this._toplevelView);
+    }
+    this._toplevelView.setOutletState(liveRoutes);
   },
 
   /**
@@ -316,6 +348,10 @@ var EmberRouter = EmberObject.extend(Evented, {
   },
 
   willDestroy: function() {
+    if (this._toplevelView) {
+      this._toplevelView.destroy();
+      this._toplevelView = null;
+    }
     this._super.apply(this, arguments);
     this.reset();
   },
@@ -344,12 +380,6 @@ var EmberRouter = EmberObject.extend(Evented, {
     var location = get(this, 'location');
     var rootURL = get(this, 'rootURL');
 
-    if (rootURL && this.container && !this.container._registry.has('-location-setting:root-url')) {
-      this.container._registry.register('-location-setting:root-url', rootURL, {
-        instantiate: false
-      });
-    }
-
     if ('string' === typeof location && this.container) {
       var resolvedLocation = this.container.lookup('location:' + location);
 
@@ -366,8 +396,15 @@ var EmberRouter = EmberObject.extend(Evented, {
     }
 
     if (location !== null && typeof location === 'object') {
-      if (rootURL && typeof rootURL === 'string') {
-        location.rootURL = rootURL;
+      if (rootURL) {
+        set(location, 'rootURL', rootURL);
+      }
+
+      // Allow the location to do any feature detection, such as AutoLocation
+      // detecting history support. This gives it a chance to set its
+      // `cancelRouterSetup` property which aborts routing.
+      if (typeof location.detect === 'function') {
+        location.detect();
       }
 
       // ensure that initState is called AFTER the rootURL is set on
@@ -723,8 +760,14 @@ var defaultActionHandlers = {
   }
 };
 
-function logError(error, initialMessage) {
+function logError(_error, initialMessage) {
   var errorArgs = [];
+  var error;
+  if (_error && typeof _error === 'object' && typeof _error.errorThrown === 'object') {
+    error = _error.errorThrown;
+  } else {
+    error = _error;
+  }
 
   if (initialMessage) { errorArgs.push(initialMessage); }
 
@@ -948,5 +991,73 @@ function forEachQueryParam(router, targetRouteName, queryParams, callback) {
     }
   }
 }
+
+function findLiveRoute(liveRoutes, name) {
+  if (!liveRoutes) { return; }
+  var stack = [liveRoutes];
+  while (stack.length > 0) {
+    var test = stack.shift();
+    if (test.render.name === name) {
+      return test;
+    }
+    var outlets = test.outlets;
+    for (var outletName in outlets) {
+      stack.push(outlets[outletName]);
+    }
+  }
+}
+
+function appendLiveRoute(liveRoutes, defaultParentState, renderOptions) {
+  var target;
+  var myState = {
+    render: renderOptions,
+    outlets: create(null)
+  };
+  if (renderOptions.into) {
+    target = findLiveRoute(liveRoutes, renderOptions.into);
+  } else {
+    target = defaultParentState;
+  }
+  if (target) {
+    set(target.outlets, renderOptions.outlet, myState);
+  } else {
+    Ember.assert("You attempted to render into '" + renderOptions.into + "' but it was not found", !renderOptions.into);
+    liveRoutes = myState;
+  }
+  return {
+    liveRoutes: liveRoutes,
+    ownState: myState
+  };
+}
+
+function normalizedConnections(route) {
+  var connections = route.connections;
+  var mainConnections = [];
+  var otherConnections = [];
+
+  for (var i = 0; i < connections.length; i++) {
+    var connection = connections[i];
+    if (connection.outlet === 'main') {
+      mainConnections.push(connection);
+    } else {
+      otherConnections.push(connection);
+    }
+  }
+
+  if (mainConnections.length === 0) {
+    // There's always an entry to represent the route, even if it
+    // doesn't actually render anything into its own
+    // template. This gives other routes a place to target.
+    mainConnections.push({
+      name: route.routeName,
+      outlet: 'main'
+    });
+  }
+
+  // We process main connections first, because a main connection may
+  // be targeted by other connections.
+  return mainConnections.concat(otherConnections);
+}
+
 
 export default EmberRouter;

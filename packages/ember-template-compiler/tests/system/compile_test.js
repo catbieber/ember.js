@@ -3,9 +3,6 @@ import {
   compile as htmlbarsCompile
 } from "htmlbars-compiler/compiler";
 
-if (Ember.FEATURES.isEnabled('ember-htmlbars')) {
-// jscs:disable validateIndentation
-
 QUnit.module('ember-htmlbars: compile');
 
 QUnit.test('compiles the provided template with htmlbars', function() {
@@ -26,5 +23,19 @@ QUnit.test('calls template on the compiled function', function() {
   ok(actual.isMethod === false, 'sets isMethod via template function');
 });
 
-// jscs:enable validateIndentation
-}
+QUnit.test('includes the current revision in the compiled template', function() {
+  var templateString = "{{foo}} -- {{some-bar blah='foo'}}";
+
+  var actual = compile(templateString);
+
+  equal(actual.revision, 'Ember@VERSION_STRING_PLACEHOLDER', 'revision is included in generated template');
+});
+
+QUnit.test('the template revision is different than the HTMLBars default revision', function() {
+  var templateString = "{{foo}} -- {{some-bar blah='foo'}}";
+
+  var actual = compile(templateString);
+  var expected = htmlbarsCompile(templateString);
+
+  ok(actual.revision !== expected.revision, 'revision differs from default');
+});

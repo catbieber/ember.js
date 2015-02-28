@@ -6,14 +6,14 @@ import { observer } from 'ember-metal/mixin';
 
 import Namespace from "ember-runtime/system/namespace";
 
-import { default as EmberController } from "ember-runtime/controllers/controller";
+import EmberController from "ember-runtime/controllers/controller";
 import EmberArrayController from "ember-runtime/controllers/array_controller";
 
 import { registerHelper } from "ember-htmlbars/helpers";
 import helpers from "ember-htmlbars/helpers";
 import compile from "ember-template-compiler/system/compile";
 
-import EmberView from "ember-routing/ext/view";
+import EmberView from "ember-views/views/view";
 import jQuery from "ember-views/system/jquery";
 import ActionManager from "ember-views/system/action_manager";
 
@@ -427,30 +427,40 @@ QUnit.test("{{render}} helper should link child controllers to the parent contro
 });
 
 QUnit.test("{{render}} helper should be able to render a template again when it was removed", function() {
-  var template = "<h1>HI</h1>{{outlet}}";
   var controller = EmberController.extend({ container: container });
-  view = EmberView.create({
-    template: compile(template)
-  });
+  var CoreOutlet = container.lookupFactory('view:core-outlet');
+  view = CoreOutlet.create();
+  runAppend(view);
 
   Ember.TEMPLATES['home'] = compile("<p>BYE</p>");
 
-  runAppend(view);
+  var liveRoutes = {
+    render: {
+      template: compile("<h1>HI</h1>{{outlet}}")
+    },
+    outlets: {}
+  };
 
   run(function() {
-    view.connectOutlet('main', EmberView.create({
-      controller: controller.create(),
-      template: compile("<div>1{{render 'home'}}</div>")
-    }));
+    liveRoutes.outlets.main = {
+      render: {
+        controller: controller.create(),
+        template: compile("<div>1{{render 'home'}}</div>")
+      }
+    };
+    view.setOutletState(liveRoutes);
   });
 
   equal(view.$().text(), 'HI1BYE');
 
   run(function() {
-    view.connectOutlet('main', EmberView.create({
-      controller: controller.create(),
-      template: compile("<div>2{{render 'home'}}</div>")
-    }));
+    liveRoutes.outlets.main = {
+      render: {
+        controller: controller.create(),
+        template: compile("<div>2{{render 'home'}}</div>")
+      }
+    };
+    view.setOutletState(liveRoutes);
   });
 
   equal(view.$().text(), 'HI2BYE');
@@ -496,9 +506,6 @@ QUnit.test("{{render}} works with slash notation", function() {
   equal(container.lookup('controller:blog.post'), renderedView.get('controller'), 'rendered with correct controller');
 });
 
-if (Ember.FEATURES.isEnabled('ember-htmlbars')) {
-// jscs:disable validateIndentation
-
 QUnit.test("throws an assertion if {{render}} is called with an unquoted template name", function() {
   var template = '<h1>HI</h1>{{render home}}';
   var controller = EmberController.extend({ container: container });
@@ -528,26 +535,3 @@ QUnit.test("throws an assertion if {{render}} is called with a literal for a mod
     runAppend(view);
   }, "The second argument of {{render}} must be a path, e.g. {{render \"post\" post}}.");
 });
-
-// jscs:enable validateIndentation
-} else {
-// jscs:disable validateIndentation
-
-QUnit.test("Using quoteless templateName works properly (DEPRECATED)", function() {
-  var template = '<h1>HI</h1>{{render home}}';
-  var controller = EmberController.extend({ container: container });
-  view = EmberView.create({
-    controller: controller.create(),
-    template: compile(template)
-  });
-
-  Ember.TEMPLATES['home'] = compile("<p>BYE</p>");
-
-  expectDeprecation("Using a quoteless parameter with {{render}} is deprecated. Please update to quoted usage '{{render \"home\"}}.");
-  runAppend(view);
-
-  equal(view.$('p:contains(BYE)').length, 1, "template was rendered");
-});
-
-// jscs:enable validateIndentation
-}
