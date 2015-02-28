@@ -71,25 +71,6 @@ QUnit.test("base URL is removed when retrieving the current pathname", function(
   equal(location.getURL(), '/foo/bar');
 });
 
-QUnit.test("base URL is preserved when moving around", function() {
-  expect(1);
-
-  HashTestLocation.reopen({
-    init: function() {
-      this._super();
-
-      set(this, 'baseURL', '/base/');
-    }
-  });
-
-  createLocation({
-    _location: mockBrowserLocation('/base/#/foo/bar')
-  });
-  location.setURL('/one/two');
-
-  equal(location.formatURL('/one/two'), '/base/#/one/two');
-});
-
 QUnit.test("HashLocation.getURL() returns the current url", function() {
   expect(1);
 
@@ -113,7 +94,7 @@ QUnit.test("HashLocation.getURL() returns the current url excluding both baseURL
   });
 
   createLocation({
-    _location: mockBrowserLocation('/base/#/foo/bar')
+    _location: mockBrowserLocation('/base/app/#/foo/bar')
   });
 
   equal(location.getURL(), '/foo/bar');

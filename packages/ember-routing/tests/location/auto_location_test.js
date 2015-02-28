@@ -306,20 +306,20 @@ QUnit.test("AutoLocation._getHistoryPath() should return a normalized, HistoryLo
   AutoTestLocation.baseURL = '/base/';
 
   mockBrowserLocation({
-    href: 'http://test.com/app/base/about?foo=bar#foo',
-    pathname: '/app/base/about',
+    href: 'http://test.com/base/app/about?foo=bar#foo',
+    pathname: '/base/app/about',
     search: '?foo=bar',
     hash: '#foo'
   });
-  equal(AutoTestLocation._getHistoryPath(), '/app/base/about?foo=bar#foo', 'URLs already in HistoryLocation form should come out the same with baseURL');
+  equal(AutoTestLocation._getHistoryPath(), '/base/app/about?foo=bar#foo', 'URLs already in HistoryLocation form should come out the same with baseURL');
 
   mockBrowserLocation({
-    href: 'http://test.com/app/base/#/about?foo=bar#foo',
-    pathname: '/app/base/',
+    href: 'http://test.com/base/app/#/about?foo=bar#foo',
+    pathname: '/base/app/',
     search: '',
     hash: '#/about?foo=bar#foo'
   });
-  equal(AutoTestLocation._getHistoryPath(), '/app/base/about?foo=bar#foo', 'HashLocation formed URLs should be normalized with baseURL');
+  equal(AutoTestLocation._getHistoryPath(), '/base/app/about?foo=bar#foo', 'HashLocation formed URLs should be normalized with baseURL');
 
 });
 
@@ -356,20 +356,20 @@ QUnit.test("AutoLocation._getHashPath() should return a normalized, HashLocation
   AutoTestLocation.baseURL = '/base/';
 
   mockBrowserLocation({
-    href: 'http://test.com/app/base/#/about?foo=bar#foo',
-    pathname: '/app/base/',
+    href: 'http://test.com/base/app/#/about?foo=bar#foo',
+    pathname: '/base/app/',
     search: '',
     hash: '#/about?foo=bar#foo'
   });
-  equal(AutoTestLocation._getHashPath(), '/app/base/#/about?foo=bar#foo', 'URLs already in HashLocation form should come out the same with baseURL');
+  equal(AutoTestLocation._getHashPath(), '/base/app/#/about?foo=bar#foo', 'URLs already in HashLocation form should come out the same with baseURL');
 
   mockBrowserLocation({
-    href: 'http://test.com/app/base/about?foo=bar#foo',
-    pathname: '/app/base/about',
+    href: 'http://test.com/base/app/about?foo=bar#foo',
+    pathname: '/base/app/about',
     search: '?foo=bar',
     hash: '#foo'
   });
-  equal(AutoTestLocation._getHashPath(), '/app/base/#/about?foo=bar#foo', 'HistoryLocation formed URLs should be normalized with baseURL');
+  equal(AutoTestLocation._getHashPath(), '/base/app/#/about?foo=bar#foo', 'HistoryLocation formed URLs should be normalized with baseURL');
 
 });
 
